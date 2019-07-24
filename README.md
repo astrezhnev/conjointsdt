@@ -15,9 +15,9 @@ A sample survey file, `immigrant_demo.sdt`, is included in the Demos folder.
 ### Source Package
 Mac OSX and Linux users do not have standalone executables and need to use the Python source files. Windows users with a Python installation can also use the source package. This is advisable as the binary package is much larger than the source since it includes the necessary Python libraries and interpreter. 
 
-The Conjoint SDT is written for Python 3 and requires Python 3.6 or greater. To obtain the most recent release of Python 3, visit [https://www.python.org/downloads/]
+The Conjoint SDT is written for Python 3 and requires Python 3.6 or greater. To obtain the most recent release of Python 3, visit https://www.python.org/downloads/
 
-Mac OSX users should make sure that they have the most recent version of the TCL/TK library installed. If you installed Python. Consult [https://www.python.org/download/mac/tcltk/] for more information.
+Mac OSX users should make sure that they have the most recent version of the TCL/TK library installed. If you installed Python. Consult https://www.python.org/download/mac/tcltk/ for more information.
 
 To run the Conjoint SDT from Python source, download the `conjointSDT.py` to the desired directory and run the file through the Python interpreter (this can be done through the command line by calling `python conjointSDT.py` or `python3 conjointSDT.py` if your installation distinguishes between versions 2 and 3 of python).
 
