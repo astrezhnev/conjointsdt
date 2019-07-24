@@ -4,7 +4,7 @@ The Conjoint Survey Design Tool assists researchers in creating multi-dimensiona
 
 ## Installation
 
-Currently the Windows executable version is unavailable. Please follow the PDF manual for instructions on how to install the Python source. A Python 3.0 version will be made available shortly.
+Currently the Windows executable version is unavailable. Please follow the PDF manual located in the Manual folder for instructions on how to install the Python source. The current version uses Python 2. A Python 3.0 version will be made available shortly.
 
 ## Version History
 
