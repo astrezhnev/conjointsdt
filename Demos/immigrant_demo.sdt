@@ -1,0 +1,456 @@
+(lp0
+S'Gender'
+p1
+aS'Education'
+p2
+aS'Language Skills'
+p3
+aS'Country of Origin'
+p4
+aS'Job'
+p5
+aS'Job Experience'
+p6
+aS'Job Plans'
+p7
+aS'Reason for Application'
+p8
+aS'Prior Entry'
+p9
+a.(dp10
+g3
+(lp11
+S'fluent English'
+p12
+aS'broken English'
+p13
+aS'tried English but unable'
+p14
+aS'used interpreter'
+p15
+asg8
+(lp16
+S'reunite with family'
+p17
+aS'seek better job'
+p18
+aS'escape persecution'
+p19
+asg7
+(lp20
+S'contract with employer'
+p21
+aS'interviews with employer'
+p22
+aS'will look for work'
+p23
+aS'no plans to look for work'
+p24
+asg1
+(lp25
+S'female'
+p26
+aS'male'
+p27
+asg5
+(lp28
+S'janitor'
+p29
+aS'waiter'
+p30
+aS'child care provider'
+p31
+aS'gardener'
+p32
+aS'financial analyst'
+p33
+aS'construction worker'
+p34
+aS'teacher'
+p35
+aS'computer programmer'
+p36
+aS'nurse'
+p37
+aS'research scientist'
+p38
+aS'doctor'
+p39
+asg6
+(lp40
+S'none'
+p41
+aS'1-2 years'
+p42
+aS'3-5 years'
+p43
+aS'5+ years'
+p44
+asg9
+(lp45
+S'never'
+p46
+aS'once as tourist'
+p47
+aS'many times as tourist'
+p48
+aS'six months with family'
+p49
+aS'once w/o authorization'
+p50
+asg2
+(lp51
+S'no formal'
+p52
+aS'4th grade'
+p53
+aS'8th grade'
+p54
+aS'high school'
+p55
+aS'two-year college'
+p56
+aS'college degree'
+p57
+aS'graduate degree'
+p58
+asg4
+(lp59
+S'Germany'
+p60
+aS'France'
+p61
+aS'Mexico'
+p62
+aS'Philippines'
+p63
+aS'Poland'
+p64
+aS'India'
+p65
+aS'China'
+p66
+aS'Sudan'
+p67
+aS'Somalia'
+p68
+aS'Iraq'
+p69
+as.(lp70
+(lp71
+(S'Job'
+p72
+S'financial analyst'
+p73
+tp74
+a(S'Education'
+p75
+S'no formal'
+p76
+tp77
+aa(lp78
+(S'Job'
+p79
+S'financial analyst'
+p80
+tp81
+a(S'Education'
+p82
+S'4th grade'
+p83
+tp84
+aa(lp85
+(S'Job'
+p86
+S'financial analyst'
+p87
+tp88
+a(S'Education'
+p89
+S'8th grade'
+p90
+tp91
+aa(lp92
+(S'Job'
+p93
+S'financial analyst'
+p94
+tp95
+a(S'Education'
+p96
+S'high school'
+p97
+tp98
+aa(lp99
+(S'Job'
+p100
+S'computer programmer'
+p101
+tp102
+a(S'Education'
+p103
+S'no formal'
+p104
+tp105
+aa(lp106
+(S'Job'
+p107
+S'computer programmer'
+p108
+tp109
+a(S'Education'
+p110
+S'4th grade'
+p111
+tp112
+aa(lp113
+(S'Job'
+p114
+S'computer programmer'
+p115
+tp116
+a(S'Education'
+p117
+S'8th grade'
+p118
+tp119
+aa(lp120
+(S'Job'
+p121
+S'computer programmer'
+p122
+tp123
+a(S'Education'
+p124
+S'high school'
+p125
+tp126
+aa(lp127
+(S'Job'
+p128
+S'research scientist'
+p129
+tp130
+a(S'Education'
+p131
+S'no formal'
+p132
+tp133
+aa(lp134
+(S'Job'
+p135
+S'research scientist'
+p136
+tp137
+a(S'Education'
+p138
+S'4th grade'
+p139
+tp140
+aa(lp141
+(S'Job'
+p142
+S'research scientist'
+p143
+tp144
+a(S'Education'
+p145
+S'8th grade'
+p146
+tp147
+aa(lp148
+(S'Job'
+p149
+S'research scientist'
+p150
+tp151
+a(S'Education'
+p152
+S'high school'
+p153
+tp154
+aa(lp155
+(S'Job'
+p156
+S'doctor'
+p157
+tp158
+a(S'Education'
+p159
+S'no formal'
+p160
+tp161
+aa(lp162
+(S'Job'
+p163
+S'doctor'
+p164
+tp165
+a(S'Education'
+p166
+S'4th grade'
+p167
+tp168
+aa(lp169
+(S'Job'
+p170
+S'doctor'
+p171
+tp172
+a(S'Education'
+p173
+S'8th grade'
+p174
+tp175
+aa(lp176
+(S'Job'
+p177
+S'doctor'
+p178
+tp179
+a(S'Education'
+p180
+S'high school'
+p181
+tp182
+aa(lp183
+(S'Reason for Application'
+p184
+S'escape persecution'
+p185
+tp186
+a(S'Country of Origin'
+p187
+S'Germany'
+p188
+tp189
+aa(lp190
+(S'Reason for Application'
+p191
+S'escape persecution'
+p192
+tp193
+a(S'Country of Origin'
+p194
+S'France'
+p195
+tp196
+aa(lp197
+(S'Reason for Application'
+p198
+S'escape persecution'
+p199
+tp200
+a(S'Country of Origin'
+p201
+S'Mexico'
+p202
+tp203
+aa(lp204
+(S'Reason for Application'
+p205
+S'escape persecution'
+p206
+tp207
+a(S'Country of Origin'
+p208
+S'Poland'
+p209
+tp210
+aa(lp211
+(S'Reason for Application'
+p212
+S'escape persecution'
+p213
+tp214
+a(S'Country of Origin'
+p215
+S'India'
+p216
+tp217
+aa(lp218
+(S'Reason for Application'
+p219
+S'escape persecution'
+p220
+tp221
+a(S'Country of Origin'
+p222
+S'Philippines'
+p223
+tp224
+aa.(lp225
+.(dp226
+g9
+(lp227
+F0.2
+aF0.2
+aF0.2
+aF0.2
+aF0.2
+asg8
+(lp228
+F0.3333333333333333
+aF0.3333333333333333
+aF0.3333333333333333
+asg1
+(lp229
+F0.5
+aF0.5
+asg4
+(lp230
+F0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+aF0.1
+asg5
+(lp231
+F0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+aF0.09090909090909091
+asg2
+(lp232
+F0.14285714285714285
+aF0.14285714285714285
+aF0.14285714285714285
+aF0.14285714285714285
+aF0.14285714285714285
+aF0.14285714285714285
+aF0.14285714285714285
+asg6
+(lp233
+F0.25
+aF0.25
+aF0.25
+aF0.25
+asg3
+(lp234
+F0.25
+aF0.25
+aF0.25
+aF0.25
+asg7
+(lp235
+F0.25
+aF0.25
+aF0.25
+aF0.25
+as.S'5'
+p236
+.S'2'
+p237
+.
