@@ -1,0 +1,19 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Hainmueller, Hopkins, and
+  Yamamoto}{Hainmueller et~al.}{2013}]{hainmueller2013}
+Hainmueller, J., D.~J. Hopkins, and T.~Yamamoto (2013).
+\newblock Causal inference in conjoint analysis: Understanding
+  multi-dimensional choices via stated preference experiments.
+\newblock {\em Political Analysis\/}~(Forthcoming).
+
+
+\bibitem[\protect\citeauthoryear{Orme}{Orme}{2002}]{Orme2002}
+Orme, B. (2002).
+\newblock Formulating attributes and levels in conjoint analysis.
+\newblock Sawtooth Software Research Paper Series.
+\newblock
+  \href{http://www.sawtoothsoftware.com/download/techpap/formatt.pdf}{http://w%
+ww.sawtoothsoftware.com/download/techpap/formatt.pdf}.
+
+\end{thebibliography}

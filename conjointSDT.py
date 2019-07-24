@@ -1,5 +1,5 @@
-# Conjoint Survey Design Tool Version 1.1: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
-# Copyright (c) 2013 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto
+# Conjoint Survey Design Tool Version 2.0: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
+# Copyright (c) 2019 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,19 @@ import pickle
 import copy
 from fractions import Fraction
 # Import TK
-from Tkinter import *
-import tkMessageBox
-import tkFileDialog
+from tkinter import *
+from tkinter import messagebox
+from tkinter import filedialog
+
+
+### Map function replacement for Python 3.0 - Thanks to Katarina Jensen
+from itertools import starmap, zip_longest
+def map(func, *iterables):
+   zipped = zip_longest(*iterables)
+   if func is None:
+       return zipped
+   return list(starmap(func, zipped))
+
 
 # Default Options Dictionary
 default_options = {}
@@ -35,9 +45,9 @@ default_options["listbox_width"] = 30
 default_options["listbox_height"] = 30
 
 # License Environmental Variables
-version = "1.0"
+version = "2.0"
 progname = "Conjoint Survey Design Tool Version " + version + ": A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms"
-copyright = "Copyright (c) 2013 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
+copyright = "Copyright (c) 2019 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
 GPL = "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>."
 companion = "This software program was designed as a companion to"
 citation = '"Causal Inference in Conjoint Analysis: Understanding Multi-Dimensional Choices via Stated Preference Experiments" By Hainmueller, J., D. J. Hopkins and T. Yamamoto'
@@ -221,13 +231,13 @@ class conjointGUI:
     # Displays the GPL License Information
     def show_license(self):
         license_string = progname + "\n" + copyright + "\n\n" + GPL + "\n\n" + companion + "\n" + citation
-        tkMessageBox.showinfo("License Information", license_string)
+        messagebox.showinfo("License Information", license_string)
      
     # -- Menu Functions --
     # - File Menu -
     # Create a new survey - re-set the attribute_list, level_dict, restrictions and options
     def new_survey(self):
-        okcancel = tkMessageBox.askokcancel("Clear current workspace?","Creating a new survey will delete all unsaved data in the current survey. Are you sure you wish to continue?")
+        okcancel = messagebox.askokcancel("Clear current workspace?","Creating a new survey will delete all unsaved data in the current survey. Are you sure you wish to continue?")
         if okcancel == 1:
             self.activeAttribute = None
             self.clear_all_data()
@@ -238,11 +248,11 @@ class conjointGUI:
     
     # Open a saved attribute_list, level_dict, restrictions and options from a python pickle file
     def open_survey(self):
-        in_file_name = tkFileDialog.askopenfilename(**self.file_opt)
+        in_file_name = filedialog.askopenfilename(**self.file_opt)
         if in_file_name != None:
             if re.search("\.sdt",in_file_name[-4:]) != None:
                 try:
-                    open_file = open(in_file_name,"r")
+                    open_file = open(in_file_name,"rb")
                     pick_in = pickle.Unpickler(open_file)
                     self.attribute_list = pick_in.load()
                     self.level_dict = pick_in.load()
@@ -258,23 +268,25 @@ class conjointGUI:
                     self.profile_num.set(str(profile))
                     self.activeAttribute = self.attribute_list[0]
                     open_file.close()
+                    
                     self.file_name = in_file_name
                     self.update_file_name(in_file_name)
                 
                     self.update_listbox_attributes()
                     self.update_listbox_levels()
+                    
                 except:
-                    tkMessageBox.showerror(title="Error",message="Error: Could not open file")
+                   messagebox.showerror(title="Error",message="Error: Could not open file")
             else:
-                tkMessageBox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .sdt extension")
+                messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .sdt extension")
         
     # Save survey data to python pickle instance
     def saveas_survey(self):
-        out_file_name = tkFileDialog.asksaveasfilename(**self.file_opt)
+        out_file_name = filedialog.asksaveasfilename(**self.file_opt)
         if out_file_name != () and out_file_name != "":
             if re.search("\.sdt",out_file_name[-4:]) != None:
                 try:
-                    save_file = open(out_file_name,"w")
+                    save_file = open(out_file_name,"wb")
                     pick_out = pickle.Pickler(save_file)
                     pick_out.dump(self.attribute_list)
                     pick_out.dump(self.level_dict)
@@ -287,9 +299,9 @@ class conjointGUI:
                     self.file_name = out_file_name
                     self.update_file_name(out_file_name)
                 except:
-                    tkMessageBox.showerror(title="Error",message="Error: Could not save to file")
+                    messagebox.showerror(title="Error",message="Error: Could not save to file")
             else:
-                tkMessageBox.showerror(title="Invalid File Name",message="Invalid file extension. Save file must have the .sdt file extension")
+                messagebox.showerror(title="Invalid File Name",message="Invalid file extension. Save file must have the .sdt file extension")
             
     def save_survey(self):
         if re.search("\.sdt",self.file_name[-4:]) == None:
@@ -312,14 +324,14 @@ class conjointGUI:
     # Imports attribute and level data from a csv file
     # Each row is an attribute + levels. First value is the attribute name, all others are levels
     def import_csv(self):
-        response = tkMessageBox.askyesnocancel(title="Save survey?", message="Would you like to save your current survey?")
+        response = messagebox.askyesnocancel(title="Save survey?", message="Would you like to save your current survey?")
         if response == None:
             pass
         elif response == 1:
             self.save_survey()
 
         if response != None:
-            in_file_name = tkFileDialog.askopenfilename(**self.csv_opt)
+            in_file_name = filedialog.askopenfilename(**self.csv_opt)
             if re.search("\.csv",in_file_name[-4:]) != None:
                 try:
                     open_file = open(in_file_name,"rb")
@@ -358,23 +370,23 @@ class conjointGUI:
                     self.update_listbox_attributes()
                     self.update_listbox_levels()
                 except:
-                    tkMessageBox.showerror(title="Error",message="Error: Could not open file")
+                    messagebox.showerror(title="Error",message="Error: Could not open file")
             else:
-                tkMessageBox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .csv extension")
+                messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .csv extension")
                 
     # Quits the gui
     def exit_survey(self):
-        response = tkMessageBox.askyesnocancel(title="Quit",message="Would you like to save your current survey?")
+        response = messagebox.askyesnocancel(title="Quit",message="Would you like to save your current survey?")
 
         if response == None:
             pass
         elif response == 1:
             self.save_survey()
             self.myParent.destroy()
-            sys.exit()
+            quit()
         elif response == False:
             self.myParent.destroy()
-            sys.exit()
+            quit()
                         
     # - Edit Menu -
     
@@ -550,7 +562,7 @@ class conjointGUI:
                     
                 self.update_restriction_list()
             else:
-                tkMessageBox.showerror(title="Cannot Add Restriction",message="Attribute or level does not exist")
+                messagebox.showerror(title="Cannot Add Restriction",message="Attribute or level does not exist")
         
     def update_restriction_list(self):
         self.box_restrictions.delete(0,END)
@@ -672,14 +684,14 @@ class conjointGUI:
                         exist = 1
                 
                 if exist == 1:
-                     tkMessageBox.showerror(title="Cannot Add Attribute",message="An Attribute can only be a part of one order randomization constraint")
+                     messagebox.showerror(title="Cannot Add Attribute",message="An Attribute can only be a part of one order randomization constraint")
                 elif exist == 0:
                     self.constraints[int(select[0])].append(attribute)
                 
                     
                 self.update_constraint_list()
             else:
-                tkMessageBox.showerror(title="Cannot Add Constraint",message="Attribute does not exist")
+                messagebox.showerror(title="Cannot Add Constraint",message="Attribute does not exist")
         
     def update_constraint_list(self):
         self.box_constraint.delete(0,END)
@@ -694,7 +706,7 @@ class conjointGUI:
     def clear_probabilities(self):
         self.probabilities = {}
         
-        for k in self.level_dict.iterkeys():
+        for k in self.level_dict:
             self.probabilities[k] = []
             length = float(len(self.level_dict[k]))
             if (length > 0):
@@ -779,13 +791,13 @@ class conjointGUI:
             self.update_prob_levels(1)
             self.update_prob_attributes()
         else:
-            tkMessageBox.showerror(title="Error",message="Error: No Attributes to Load")
+            messagebox.showerror(title="Error",message="Error: No Attributes to Load")
         
     def reset_weights(self):
         
         self.tempProbabilities = {}
         
-        for k in self.level_dict.iterkeys():
+        for k in self.level_dict:
             self.tempProbabilities[k] = []
             length = float(len(self.level_dict[k]))
             if (length > 0):
@@ -830,11 +842,13 @@ class conjointGUI:
 
         item = map(int, self.prob_box_attributes.curselection())
         sums = self.compute_prob_sums()
-        keys = self.tempProbabilities.keys()
+        #print(self.probabilities)
+        #print(self.level_dict)
+        #print(sums)
         if len(item) > 0:
             self.probactiveAttribute = self.attribute_list[item[0]]
             if self.probactiveAttribute != None:
-                val = sums[keys.index(self.probactiveAttribute)]
+                val = sums[self.probactiveAttribute]
                 if val.denominator >= 1000:
                     self.levels_prob_label.config(text="Levels - " + self.probactiveAttribute + " - " + "Sum = " + str(float(val.numerator/val.denominator)))
                 elif val == 1:
@@ -853,7 +867,7 @@ class conjointGUI:
         else:
             self.prob_box_levels.delete(0,END)
             if self.probactiveAttribute != None:
-                val = sums[keys.index(self.probactiveAttribute)]
+                val = sums[self.probactiveAttribute]
                 if val.denominator >= 1000:
                     self.levels_prob_label.config(text="Levels - " + self.probactiveAttribute + " - " + "Sum = " + str(float(val.numerator/val.denominator)))
                 elif val == 1:
@@ -886,56 +900,55 @@ class conjointGUI:
                 errmsg = errmsg + str(err) + ", "
                 
             errmsg = errmsg.rstrip(", ")
-            tkMessageBox.showerror(title="Error",message=errmsg)
+            messagebox.showerror(title="Error",message=errmsg)
         
     
     # Check to make sure the probabilities are legitimate    
     def validate_probabilities(self):
         sums = self.compute_prob_sums()
-        keys = self.tempProbabilities.keys()
        
         all_sum_to_one = True
         fails = []
-        for k in range(len(sums)):
+        for k in sums:
             if float(sums[k]) != 1:
                 all_sum_to_one = False
-                fails.append(keys[k])
+                fails.append(k)
         return all_sum_to_one, fails
         
     # Sum the probabilities for each section
     def compute_prob_sums(self):
-        sums = []
-        for attr in self.tempProbabilities.iterkeys():
+        sums = {}
+        for attr in self.tempProbabilities:
             sum_out = Fraction()
             for k in self.tempProbabilities[attr]:
                 sum_out = sum_out + Fraction(k)
-            sums.append(sum_out.limit_denominator())
+            sums[attr] = sum_out.limit_denominator()
         
         return(sums)
         
     # Export the design information to .php
     def export_qualtrics(self):
-        out_php_name = tkFileDialog.asksaveasfilename(**self.file_php)
+        out_php_name = filedialog.asksaveasfilename(**self.file_php)
         if out_php_name != None:
             if re.search("\.php",out_php_name[-4:]) != None:
                 qualtrics_out(out_php_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()))
             else:
-                tkMessageBox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .php extension")
+                messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .php extension")
 
     # Export the design information to R
     def export_R(self):
-        out_R_name = tkFileDialog.asksaveasfilename(**self.file_dat)
+        out_R_name = filedialog.asksaveasfilename(**self.file_dat)
         if out_R_name != None:
             R_out(out_R_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()))
             
     # Create a default template to pass into Qualtrics
     def export_question(self):
-        out_html_name = tkFileDialog.asksaveasfilename(**self.file_html)
+        out_html_name = filedialog.asksaveasfilename(**self.file_html)
         if out_html_name != None:
             if re.search("\.html",out_html_name[-5:]) != None:
                 html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()))
             else:
-                tkMessageBox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .html extension")
+                messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .html extension")
 
     # -- Message Box Prompt
     def msg_box(self, msg='Name of new attribute?', btname="Add", cmd = None, title = "",extra=True):
@@ -1175,18 +1188,198 @@ def R_out(filename, attributes, level_dict, restrictions, constraints, probabili
 # Output results to a qualtrics-compatible php file
 def qualtrics_out(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize):
     
-    template_1 = open(os.path.join(os.getcwd(),"Template","conjoint_template1.php"),"rb")
-    template_2 = open(os.path.join(os.getcwd(),"Template","conjoint_template2.php"),"rb")
-    template_3 = open(os.path.join(os.getcwd(),"Template","conjoint_template3.php"),"rb")
-        
-    temp_1 = template_1.read()
-    temp_2 = template_2.read()
-    temp_3 = template_3.read()
-    
-    template_1.close()
-    template_2.close()
-    template_3.close()
-    
+    temp_1 = """<?php
+// Code to randomly generate conjoint profiles to send to a Qualtrics instance
+
+// Terminology clarification: 
+// Task = Set of choices presented to respondent in a single screen (i.e. pair of candidates)
+// Profile = Single list of attributes in a given task (i.e. candidate)
+// Attribute = Category characterized by a set of levels (i.e. education level)
+// Level = Value that an attribute can take in a particular choice task (i.e. "no formal education")
+
+// Attributes and Levels stored in a 2-dimensional Array 
+
+// Function to generate weighted random numbers
+function weighted_randomize($prob_array, $at_key)
+{
+	$prob_list = $prob_array[$at_key];
+	
+	// Create an array containing cutpoints for randomization
+	$cumul_prob = array();
+	$cumulative = 0.0;
+	for ($i=0; $i<count($prob_list); $i++){
+		$cumul_prob[$i] = $cumulative;
+		$cumulative = $cumulative + floatval($prob_list[$i]);
+	}
+
+	// Generate a uniform random floating point value between 0.0 and 1.0
+	$unif_rand = mt_rand() / mt_getrandmax();
+
+	// Figure out which integer should be returned
+	$outInt = 0;
+	for ($k = 0; $k < count($cumul_prob); $k++){
+		if ($cumul_prob[$k] <= $unif_rand){
+			$outInt = $k + 1;
+		}
+	}
+
+	return($outInt);
+
+}
+                    """
+    temp_2 = """// Re-randomize the $featurearray
+
+// Place the $featurearray keys into a new array
+$featureArrayKeys = array();
+$incr = 0;
+
+foreach($featurearray as $attribute => $levels){	
+	$featureArrayKeys[$incr] = $attribute;
+	$incr = $incr + 1;
+}
+
+// Backup $featureArrayKeys
+$featureArrayKeysBackup = $featureArrayKeys;
+
+// If order randomization constraints exist, drop all of the non-free attributes
+if (count($attrconstraintarray) != 0){
+	foreach ($attrconstraintarray as $constraints){
+		if (count($constraints) > 1){
+			for ($p = 1; $p < count($constraints); $p++){
+				if (in_array($constraints[$p], $featureArrayKeys)){
+					$remkey = array_search($constraints[$p],$featureArrayKeys);
+					unset($featureArrayKeys[$remkey]);
+				}
+			}
+		}
+	}
+} 
+// Re-set the array key indices
+$featureArrayKeys = array_values($featureArrayKeys);
+// Re-randomize the $featurearray keys
+shuffle($featureArrayKeys);
+
+// Re-insert the non-free attributes constrained by $attrconstraintarray
+if (count($attrconstraintarray) != 0){
+	foreach ($attrconstraintarray as $constraints){
+		if (count($constraints) > 1){
+			$insertloc = $constraints[0];
+			if (in_array($insertloc, $featureArrayKeys)){
+				$insert_block = array($insertloc);
+				for ($p = 1; $p < count($constraints); $p++){
+					if (in_array($constraints[$p], $featureArrayKeysBackup)){
+						array_push($insert_block, $constraints[$p]);
+					}
+				}
+				
+				$begin_index = array_search($insertloc, $featureArrayKeys);
+				array_splice($featureArrayKeys, $begin_index, 1, $insert_block);
+			}
+		}
+	}
+}
+
+
+// Re-generate the new $featurearray - label it $featureArrayNew
+
+$featureArrayNew = array();
+foreach($featureArrayKeys as $key){
+	$featureArrayNew[$key] = $featurearray[$key];
+}"""
+    temp_3 = """
+// Initialize the array returned to the user
+// Naming Convention
+// Level Name: F-[task number]-[profile number]-[attribute number]
+// Attribute Name: F-[task number]-[attribute number]
+// Example: F-1-3-2, Returns the level corresponding to Task 1, Profile 3, Attribute 2 
+// F-3-3, Returns the attribute name corresponding to Task 3, Attribute 3
+
+$returnarray = array();
+
+// For each task $p
+for($p = 1; $p <= $K; $p++){
+
+	// For each profile $i
+	for($i = 1; $i <= $N; $i++){
+
+		// Repeat until non-restricted profile generated
+		$complete = False;
+
+		while ($complete == False){
+
+			// Create a count for $attributes to be incremented in the next loop
+			$attr = 0;
+			
+			// Create a dictionary to hold profile's attributes
+			$profile_dict = array();
+
+			// For each attribute $attribute and level array $levels in task $p
+			foreach($featureArrayNew as $attribute => $levels){	
+				
+				// Increment attribute count
+				$attr = $attr + 1;
+
+				// Create key for attribute name
+				$attr_key = "F-" . (string)$p . "-" . (string)$attr;
+
+				// Store attribute name in $returnarray
+				$returnarray[$attr_key] = $attribute;
+
+				// Get length of $levels array
+				$num_levels = count($levels);
+
+				// Randomly select one of the level indices
+				if ($weighted == 1){
+					$level_index = weighted_randomize($probabilityarray, $attribute) - 1;
+
+				}else{
+					$level_index = mt_rand(1,$num_levels) - 1;	
+				}	
+
+				// Pull out the selected level
+				$chosen_level = $levels[$level_index];
+			
+				// Store selected level in $profileDict
+				$profile_dict[$attribute] = $chosen_level;
+
+				// Create key for level in $returnarray
+				$level_key = "F-" . (string)$p . "-" . (string)$i . "-" . (string)$attr;
+
+				// Store selected level in $returnarray
+				$returnarray[$level_key] = $chosen_level;
+
+			}
+
+			$clear = True;
+			// Cycle through restrictions to confirm/reject profile
+			if(count($restrictionarray) != 0){
+
+				foreach($restrictionarray as $restriction){
+					$false = 1;
+					foreach($restriction as $pair){
+						if ($profile_dict[$pair[0]] == $pair[1]){
+							$false = $false*1;
+						}else{
+							$false = $false*0;
+						}
+						
+					}
+					if ($false == 1){
+						$clear = False;
+					}
+				}
+			}
+			$complete = $clear;
+		}
+	}
+
+
+}
+
+// Return the array back to Qualtrics
+print  json_encode($returnarray);
+?>
+"""
     # Drop attributes that don't have any levels
     attrout = []
     contin = True
@@ -1195,9 +1388,9 @@ def qualtrics_out(filename, attributes, level_dict, restrictions, constraints, p
             attrout.append(attributes[i])
         else:
             contin = False
-            print "Error: Attribute " + attributes[i] + " has no associated levels"
+            print("Error: Attribute " + attributes[i] + " has no associated levels")
     if contin == False:
-        tkMessageBox.showerror(title="Error",message="Error: Cannot export to PHP. Some attributes have no levels.")
+        messagebox.showerror(title="Error",message="Error: Cannot export to PHP. Some attributes have no levels.")
         return 
     
     # Drop any Null constraints
@@ -1208,7 +1401,7 @@ def qualtrics_out(filename, attributes, level_dict, restrictions, constraints, p
     
     constraints = constrai
     
-    out_file = open(filename,"w")
+    out_file = open(filename,"w", encoding="utf-8")
     out_file.write(temp_1)
     out_file.write("\n\n")
     arrayString = "$featurearray = array("
@@ -1359,13 +1552,14 @@ def html_out(filename, num_attr, profiles, tasks):
         out_file = open(filename + "_task"+str(i+1) + ".html", "w")
         out_file.write(text_out)
         out_file.close()
-    tkMessageBox.showinfo(title="Files Created", message=str(tasks) + " files created\n\n" + filename + "_task#.html")
+    messagebox.showinfo(title="Files Created", message=str(tasks) + " files created\n\n" + filename + "_task#.html")
     
 # Main Loop
 if __name__=="__main__":
     
     # Create the root window
     root = Tk()
+    root.title('Conjoint Survey Design Tool')
     conjointMain = conjointGUI(root)
 
     # Execute root window main loop
