@@ -1153,7 +1153,7 @@ class conjointGUI:
 # Output design to the R package
 def R_out(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize):
     
-     out_file = open(filename, "w")
+     out_file = open(filename, "w", encoding="utf-8")
      # Write attribute names and levels
      out_file.write("Attributes\n")
      for attr in attributes:
@@ -1549,7 +1549,7 @@ def html_out(filename, num_attr, profiles, tasks):
             
         text_out = text_out + footer
         
-        out_file = open(filename + "_task"+str(i+1) + ".html", "w")
+        out_file = open(filename + "_task"+str(i+1) + ".html", "w", encoding="utf-8")
         out_file.write(text_out)
         out_file.close()
     messagebox.showinfo(title="Files Created", message=str(tasks) + " files created\n\n" + filename + "_task#.html")
