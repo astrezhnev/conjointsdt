@@ -30,8 +30,8 @@
 \usepackage{pdflscape}
 % == hyperref options
 \usepackage{color}
-\usepackage[pdftex, bookmarksopen=true, bookmarksnumbered=true]{hyperref}
-
+\usepackage[pdftex, colorlinks=false]{hyperref}
+\hypersetup{hidelinks}
 % == Other Packages
 %\usepackage{amsmath, amsmaths, amssymb, url, bm}
 \usepackage{amsmath, amssymb, url, bm}
@@ -191,7 +191,7 @@ Above the panels are two action menus. The \texttt{File} menu contains the follo
 
 \begin{itemize}
 \item \texttt{New}: Begins a new design project. Prompts the user to save any existing work.
-\item \texttt{Open}: Opens an existing project. Project filenames all must end in sdt.
+\item \texttt{Open}: Opens an existing project. Project filenames all must end in sdt. Note that files with these extensions will not automatically open when clicked on in a file browser.
 \item \texttt{Save}: Saves current project. Project filenames must end in .sdt.
 \item \texttt{Save As}: Saves current project to a new file.
 \item \texttt{Import from CSV}: Imports a set of pre-defined attributes and levels from a Comma Separated Values file. CSV files must contain one line per attribute. The first element of each line defines the name of the attribute. The subsequent elements are the names of the corresponding levels.
@@ -217,7 +217,7 @@ Below the panels are the Add/Remove/Edit buttons for attributes and levels. To a
 
 \subsection{Settings}
 
-The settings window contains options related to the .php output file.
+The settings window contains options related to the .php output file. \textbf{Note:} These settings, aside from the number of tasks and profiles per task are \textit{not} saved as part of the \texttt{.sdt} file.
 
 \begin{figure}[ht!]
 \centering\includegraphics[scale=.6]{graphics/settings_screen.png}
@@ -253,8 +253,7 @@ To create a new restriction, click on \texttt{New Restriction}. To delete an exi
 
 \subsection{Weighted Randomization}
 
-By default, each attribute level has an equal probability of being drawn. That is, for a given attribute, each defined level has the same probability of appearing in a profile. However, you may want to define a non-uniform randomization scheme such that some levels are more likely to appear in a 
-profile than others. 
+By default, each attribute level has an equal probability of being drawn. That is, for a given attribute, each defined level has the same probability of appearing in a profile. However, you may want to define a non-uniform randomization scheme such that some levels are more likely to appear in a profile than others. 
 
 \begin{figure}[ht!]
 \centering\includegraphics[scale=.6]{graphics/weight_screen.png}
@@ -262,6 +261,8 @@ profile than others.
 \end{figure}
 
 This window allows you to assign selection probabilities for each level within an attribute. By default, each level within an attribute has an equal probability of selection into the profile. To change a weight, select a level from the panel and click \texttt{Edit Weight}. Standard probability constraints apply. Probabilities must be between $0$ and $1$ and must sum to $1$ across all levels within an attribute. The sum across weights within an attribute is displayed above the levels panel. To save the weights, click \texttt{Save Weights}. To reset the weights to the default uniform randomization scheme, click \texttt{Reset Weights to Default}.
+
+\textbf{Warning}: In order for these weights to be properly exported to the randomization scripts, you also need to make sure to check the \texttt{Use Weighted Randomization} option in the \textbf{Settings} menu. This setting is \textbf{not saved} when you save the \text{.sdt} file, so be sure to enable it before using \texttt{Export to PHP}.
 
 \textbf{Note}: If attributes and levels are subsequently added to the design, the weighted probabilities will reset to the default (uniform randomization). It is recommended that you define all of the attributes and levels that you wish to include in your design and then alter the randomization weights. 
 
@@ -310,6 +311,12 @@ If you are using the Qualtrics survey software, it is very easy to integrate the
 \item You may then edit the question text, labels and responses to match your design. Note that the embedded data fields have the format \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]\}} (for attribute names) and \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]-[PROFILE]\}} (for attribute levels)
 
 \end{enumerate}
+
+\section{Export to R}
+
+If you would like to use the design tool to specify a conjoint design for use in the \texttt{cjoint} package, use the ``Export Design to R'' menu option. This will ask you to save a \texttt{.dat} file which will contain the design's attributes, levels and level assignment probabilities. 
+
+This file can be passed to the \texttt{makeDesign()} function in the \texttt{cjoint} R package. Please consult the documentation for the \texttt{cjoint} R package located on CRAN for more information on where to pass the design file and for general instruction on how to perform the analysis.
 
 \section{Contact}
 

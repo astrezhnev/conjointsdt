@@ -1,6 +1,10 @@
 # Conjoint Survey Design Tool
 
-The Conjoint Survey Design Tool assists researchers in creating multi-dimensional choice experiments that can be readily incorporated into any pre-existing web survey software (such as Qualtrics). Conjoint analysis is a type of survey experiment often used by market researchers to measure consumer preferences over a variety of product attributes. Hainmueller, Hopkins and Yamamoto (2013) demonstrate the value of this design for political science applications. Conjoint experiments present respondents with a choice among set of profiles composed of multiple randomly assigned attributes. This approach allows researchers to estimate the effect of each individual component on the probability that the respondent will choose a profile. This software tool is designed as a companion to Hainmueller, Hopkins and Yamamoto (2013), providing a graphical user interface for generating conjoint experiments.
+The Conjoint Survey Design Tool assists researchers in creating multi-dimensional choice experiments that can be readily incorporated into any pre-existing web survey software (such as Qualtrics). Conjoint analysis is a type of survey experiment often used by market researchers to measure consumer preferences over a variety of product attributes. Hainmueller, Hopkins and Yamamoto (2014) demonstrate the value of this design for political science applications. Conjoint experiments present respondents with a choice among set of profiles composed of multiple randomly assigned attributes. This approach allows researchers to estimate the effect of each individual component on the probability that the respondent will choose a profile. This software tool is designed as a companion to Hainmueller, Hopkins and Yamamoto (2014), providing a graphical user interface for generating conjoint experiments.
+
+## Citation 
+
+Hainmueller, Jens., Hopkins, Daniel J., Yamamoto, Teppei. (2014). Causal Inference in Conjoint Analysis: Understanding Multidimensional Choices Via Stated Preference Experiments. *Political Analysis* 22(1), 1-30
 
 ## Installation
 
@@ -26,6 +30,10 @@ A sample survey file, `immigrant_demo.sdt`, is included in the Demos folder.
 ## Instructions
 
 Please consult the `conjoint_sdt_manual.pdf` file located in the Manual folder for detailed instructions on how to use the GUI design tool.
+  
+## Companion R package
+
+After implementing the experiment and collecting the result, researchers can use the `cjoint` R package for analysis and visualization of the results. This package can be installed directly from CRAN. The most current documentation can be found at `https://cran.r-project.org/web/packages/cjoint/index.html`.
   
 ## Version History
 
