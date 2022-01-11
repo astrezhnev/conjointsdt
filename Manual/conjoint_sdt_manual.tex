@@ -116,13 +116,13 @@
 
 \newcommand{\blind}{0}
 
-\newcommand{\tit}{Conjoint Survey Design Tool: Software Manual\thanks{Designed as a companion to ``Causal Inference in Conjoint Analysis: Understanding Multi-Dimensional Choices via Stated Preference Experiments" by Hainmueller, J., D. J. Hopkins, and T. Yamamoto}}
+\newcommand{\tit}{Conjoint Survey Design Tool: Software Manual\thanks{Designed as a companion to Hainmueller, Jens, Daniel J. Hopkins, and Teppei Yamamoto. "Causal inference in conjoint analysis: Understanding multidimensional choices via stated preference experiments." Political Analysis 22, no. 1 (2014): 1-30}}
 
 \if0\blind
 \title{\bf \tit}
-  \author{Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, Teppei Yamamoto\\\\Version 2.0}
+  \author{Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, Teppei Yamamoto\\\\Version 3.0}
 
-\date{\today}
+\date{January 10, 2022}
 \maketitle
 \if1\blind
 \maketitle
@@ -203,7 +203,10 @@ The \texttt{Edit} menu contains the following commands
 \item \texttt{Restrictions}: Opens the profile restrictions menu. Here you can set the attribute/level pairs that should be prevented from appearing in profiles (see Section 4.3 for details).
 \item \texttt{Randomization Weights}: Opens the randomization weights menu. Here you can set the probability that each level will be chosen in a randomly generated profile (see Section 4.4 for details).
 \item \texttt{Attribute Order Constraints}: Opens the attribute order constraint menu. One option in the Settings menu is to randomize the order of the attributes in the profiles for each respondent. This helps minimize the influence of possible ordering effects. In this panel, you may set constraints on this randomization such that particular sets of attributes are always grouped together in the same block.
-\item \texttt{Export to .php}: Exports the current design to a .php file that carries out task and profile generation for each respondent. This file can be uploaded to a webserver and queried by your survey software. See Section 5 for details.
+\item \texttt{Export to JavaScript}: Exports the current design to a .js file that carries out task and profile generation for each respondent. This file can be integrated directly into Qualtrics. See Section 5 for details.
+\item \texttt{Export to .php}: Exports the current design to a .php file that carries out task and profile generation for each respondent. This file can be uploaded to a webserver and queried by your survey software. See Section 6 for details.
+\item \texttt{Create Qualtrics Question Templates}: Generates HTML question templates for Qualtrics that have the correct embedded data identifiers for each attribute and level.
+\item \texttt{Export design to R}: Exports the design (level probabilities and randomization constraints) to be used by the R package \texttt{cjoint}. 
 \end{itemize}
 
 The \texttt{About} menu contains the following command
@@ -226,7 +229,8 @@ The settings window contains options related to the .php output file. \textbf{No
 
 \begin{itemize}
 \item \texttt{Randomize order of attributes for each respondent}: Turns on/off attribute order randomization in the .php file output. Select if you want the order in which attributes are presented in a conjoint profile to vary for each respondent. Default True.
-\item \texttt{Use weighted randomization}: Enables weighted randomization of levels. Select if you have defined non-uniform randomization weights and want the .php file to use them. Default False.
+\item \texttt{Use weighted randomization}: Enables weighted randomization of levels. Select if you have defined non-uniform randomization weights and want the randomization script to use them. Default False.
+\item \texttt{Prevent identical profiles}: Ensures that no task can have two profiles that have exactly the same levels for all attributes. With sufficiently many attributes/levels, the chances of getting a task with identical profiles is already very low and the presence of cross-profile restrictions creates additional complications for interpreting the AMCE estimand. Default False.
 \item \texttt{Number of Tasks per Respondent}: Sets the number of tasks assigned to a single respondent. Default 5
 \item \texttt{Number of Profiles per Task}: Sets the number of profiles presented in a single task. Default 2.
 \end{itemize}
@@ -281,9 +285,45 @@ Note that if you define multiple blocks, only the attributes \textit{within} eac
 
 \textbf{Note}: As with the profile restrictions, if you choose to delete an attribute you will have to manually remove any corresponding order randomization constraint 
 
+\section{Export to JavaScript}
+
+To incorporate your conjoint design into Qualtrics, you can generate a snippet of javascript code that will randomly generate a full set of tasks for a respondent according to your specified settings. The snippet can be added to the custom javascript of any survey question that appears prior to your conjoint question block (typically the survey consent page if you have one).
+
+The script will assign embedded data fields in Qualtrics for each randomized attribute and level. These fields all have the following structure: 
+
+\texttt{F-[task number]-[attribute number]} matches the attribute name corresponding to Task \texttt{[task number]}, Attribute \texttt{[attribute number]}. \texttt{F-[task number]-[profile number]-[attribute number]} matches the selected level corresponding to Task \texttt{[task number]}, Profile \texttt{[profile number]}, Attribute \texttt{[attribute number]}. For example, the embedded data field \texttt{F-1-3-2} will contain the level corresponding to Task 1, Profile 3, Attribute 2. Likewise, the embedded data field \texttt{F-3-3} will contain the attribute name corresponding to Task 3, Attribute 3.
+
+\subsection{How to embed your design into a Qualtrics question}
+
+If you are using the Qualtrics survey software, it is very easy to integrate the .js file you have exported with your survey flow. The following instructions will walk you through the process of incorporating your conjoint design into a Qualtrics question.
+\begin{enumerate}
+\item Select the first question in your survey (i.e. the consent page) (Really, any question that appears on a page prior to the conjoint block should work.)
+\item Open the question's custom JavaScript (this appears under Edit Question - Question Behavior - JavaScript).
+\item Copy the source code from your generated .js file below the commented line \texttt{/*Place your JavaScript here to run when the page loads*/} (this is inside the  \texttt{addOnload} function). The code snippet will update the embedded data fields assigned to the respondent when the respondent loads the page.
+\item If you have already created the question designs within Qualtrics, you can pipe the embedded data fields into any question element within the survey. \footnote{For more information on piping text from embedded data fields, see \href{http://www.qualtrics.com/university/researchsuite/basic-building/editing-questions/piped-text/}{http://www.qualtrics.com/university/researchsuite/basic-building/editing-questions/piped-text/}.} 
+\item If you have not created the questions, a basic set of templates for the conjoint tasks can be generated using the \texttt{Create Qualtrics Question Templates} command in the \texttt{Edit} menu. This command will create an .html file for every task in your design.
+\item To add a question to your design, create a new item in your Qualtrics survey and select the ``Multiple Choice" item type. Edit the question in HTML view, open the source code from one of the .html files in a text editor (such as Notepad), and copy the source into the HTML view. Repeat for each task.
+\item You may then edit the question text, labels and responses to match your design. Note that references to the embedded data fields have the format \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]\}} (for attribute names) and \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]-[PROFILE]\}} (for attribute levels)
+\end{enumerate}
+
+In addition to pasting in the JavaScript code, you will also need to manually initialize each embedded data field in the Survey Flow in order for Qualtrics to correctly export these fields to the results CSV. To do this
+
+\begin{enumerate}
+\item In your Qualtrics control panel, navigate to the Survey Flow.
+\item Add a new ``Embedded Data" element to the top of your survey flow. Make sure that this element is above your conjoint question blocks \textbf{and above to the question that contains the JavaScript snippet} in the survey flow.
+\item Add a unique field for each attribute and each level embedded data field in your survey (e.g. F-1-1, F-2-1, F-1-3-2). The total number of fields will depend on the number of tasks, profiles and attributes. You can consult the generated HTML Question Templates (see above) for a list of all attribute and level identifiers used in your survey. You may leave the assigned value in this element to ``Value will be set from Panel or URL" as it will be subsequently modified by the JS code.
+\end{enumerate}
+
+Note that if you skip this step and field the survey without initializing the fields in the Survey Flow, the questions do seem to correctly appear and the assigned attributes and levels for each respondent \textit{are} saved but will not be part of the CSV export. If you are having trouble getting the assigned attributes and levels to appear in your exported CSV results and you have already fielded your survey, make sure you add the embedded data field to your Survey Flow as above and re-export the CSV.
+
+If you can come up with a faster way of doing this, please let me know! Unfortunately, Qualtrics appears to need all exported embedded data fields to be defined in the Survey Flow.
+
 \section{Export to PHP}
 
-To incorporate your conjoint design into an online survey experiment, you will have to export it to a .php file. When queried, the .php script will generate a set of tasks for a single respondent according to the settings that you have specified. The script will return an array object with the following key-value structure:
+
+\textcolor{red}{\large This approach is no longer recommended. It is much easier to use the ``Export to JavaScript" approach to embed the randomization script within a Qualtrics survey as this does not require using a second external server.}
+
+To incorporate your conjoint design into an online survey experiment, you can export it to a .php file. When queried, the .php script will generate a set of tasks for a single respondent according to the settings that you have specified. The script will return an array object with the following key-value structure:
 
 \texttt{F-[task number]-[attribute number]} matches the attribute name corresponding to Task \texttt{[task number]}, Attribute \texttt{[attribute number]}. \texttt{F-[task number]-[profile number]-[attribute number]} matches the selected level corresponding to Task \texttt{[task number]}, Profile \texttt{[profile number]}, Attribute \texttt{[attribute number]}. For example, the key \texttt{F-1-3-2} matches the level corresponding to Task 1, Profile 3, Attribute 2. Likewise, the key \texttt{F-3-3} returns the attribute name corresponding to Task 3, Attribute 3.
 
@@ -308,7 +348,7 @@ If you are using the Qualtrics survey software, it is very easy to integrate the
 \item If you have already created the question designs within Qualtrics, you can pipe the embedded data fields into any question element within the survey. \footnote{For more information on piping text from embedded data fields, see \href{http://www.qualtrics.com/university/researchsuite/basic-building/editing-questions/piped-text/}{http://www.qualtrics.com/university/researchsuite/basic-building/editing-questions/piped-text/}.} 
 \item If you have not created the questions, a basic set of templates for the conjoint tasks can be generated using the \texttt{Create Qualtrics Question Templates} command in the \texttt{Edit} menu. This command will create an .html file for every task in your design.
 \item To add a question to your design, create a new item in your Qualtrics survey and select the ``Multiple Choice" item type. Edit the question in HTML view, open the source code from one of the .html files in a text editor (such as Notepad), and copy the source into the HTML view. Repeat for each task.
-\item You may then edit the question text, labels and responses to match your design. Note that the embedded data fields have the format \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]\}} (for attribute names) and \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]-[PROFILE]\}} (for attribute levels)
+\item You may then edit the question text, labels and responses to match your design. Note that references to the embedded data fields have the format \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]\}} (for attribute names) and \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]-[PROFILE]\}} (for attribute levels)
 
 \end{enumerate}
 
@@ -320,7 +360,7 @@ This file can be passed to the \texttt{makeDesign()} function in the \texttt{cjo
 
 \section{Contact}
 
-If you have further questions about using the Conjoint SDT or wish to report a bug, please do not hesitate to contact Anton Strezhnev at \href{mailto:as6672@nyu.edu}{as6672@nyu.edu}.
+If you have further questions about using the Conjoint SDT or wish to report a bug, please do not hesitate to contact Anton Strezhnev at \href{mailto:astrezhnev@uchicago.edu}{astrezhnev@uchicago.edu}.
 
 \section{License}
 

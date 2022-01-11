@@ -37,6 +37,12 @@ After implementing the experiment and collecting the result, researchers can use
   
 ## Version History
 
+Version 3.0 - January 10, 2022
+
+Added a JavaScript randomizer to supplement the existing PHP randomizer. Users can now export JavaScript snippet that can be placed directly within a Qualtrics question to generate the conjoint tasks for a respondent. This no longer requires users to have a second server to host the PHP script and allows the randomization be carried out entirely within Qualtrics.
+
+Added a feature to allow users to generate designs that prevent identical profiles from appearing in a single task (off by default).
+
 Version 2.0 - July 24, 2019
 
 Ported over to Python 3. Fixed various compatability issues that had accumulated over the last several years.
@@ -59,7 +65,7 @@ First release
 
 ## Contact
 
-If you have further questions about using the Conjoint SDT or wish to report a bug, please do not hesitate to contact Anton Strezhnev at [as6672@nyu.edu](mailto:as6672@nyu.edu).
+If you have further questions about using the Conjoint SDT or wish to report a bug, please do not hesitate to contact Anton Strezhnev at [astrezhnev@uchicago.edu](mailto:astrezhnev@uchicago.edu).
 
 ## License
 

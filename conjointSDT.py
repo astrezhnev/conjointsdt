@@ -1,5 +1,5 @@
-# Conjoint Survey Design Tool Version 2.0: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
-# Copyright (c) 2019 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto
+# Conjoint Survey Design Tool Version 3.0: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
+# Copyright (c) 2022 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This software program was designed as a companion to 
-# "Causal Inference in Conjoint Analysis: Understanding Multi-Dimensional Choices via Stated Preference Experiments" 
-# by Hainmueller, J., D. J. Hopkins and T. Yamamoto
+# Hainmueller, Jens, Daniel J. Hopkins, and Teppei Yamamoto. 
+# "Causal inference in conjoint analysis: Understanding multidimensional choices via stated preference experiments." 
+# Political Analysis 22, no. 1 (2014): 1-30.
 
 # Imports
 import sys, os, re
@@ -45,12 +46,12 @@ default_options["listbox_width"] = 30
 default_options["listbox_height"] = 30
 
 # License Environmental Variables
-version = "2.0"
+version = "3.0"
 progname = "Conjoint Survey Design Tool Version " + version + ": A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms"
-copyright = "Copyright (c) 2019 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
+copyright = "Copyright (c) 2022 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
 GPL = "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>."
 companion = "This software program was designed as a companion to"
-citation = '"Causal Inference in Conjoint Analysis: Understanding Multi-Dimensional Choices via Stated Preference Experiments" By Hainmueller, J., D. J. Hopkins and T. Yamamoto'
+citation = 'Hainmueller, Jens, Daniel J. Hopkins, and Teppei Yamamoto. "Causal inference in conjoint analysis: Understanding multidimensional choices via stated preference experiments." Political Analysis 22, no. 1 (2014): 1-30.'
         
 # conjointGUI is the main GUI control class
 # arguments: parent - TK window parent class
@@ -84,7 +85,14 @@ class conjointGUI:
         self.file_php['filetypes'] = [('PHP files','.php'),('All Files', '.*')]
         self.file_php['title'] = "Select a file..."
         self.file_php['parent'] = self.myParent
-        
+ 
+        self.file_js = {}
+        self.file_js['defaultextension'] = '.js'
+        self.file_js['initialfile'] = "untitled.js" 
+        self.file_js['filetypes'] = [('JavaScript files','.js'),('All Files', '.*')]
+        self.file_js['title'] = "Select a file..."
+        self.file_js['parent'] = self.myParent       
+ 
         self.file_html = {}
         self.file_html['defaultextension'] = '.html'
         self.file_html['initialfile'] = "untitled.html" 
@@ -133,6 +141,7 @@ class conjointGUI:
         self.editmenu.add_command(label="Attribute Order Constraints", command=self.edit_orderconstraints)
         self.editmenu.add_separator()
         self.editmenu.add_command(label="Export to PHP", command=self.export_qualtrics)
+        self.editmenu.add_command(label="Export to JavaScript", command=self.export_qualtrics_js)
         self.editmenu.add_command(label="Create Qualtrics Question Templates", command=self.export_question)
         self.editmenu.add_command(label="Export design to R", command=self.export_R)        
         
@@ -157,6 +166,8 @@ class conjointGUI:
         self.randomize_resp_attr.set(1)
         self.weighted_randomize_attr = IntVar()
         self.weighted_randomize_attr.set(0)
+        self.no_duplicate_profiles = IntVar()
+        self.no_duplicate_profiles.set(0)
         self.task_num = StringVar()
         self.task_num.set("5")
         self.profile_num = StringVar()
@@ -348,6 +359,8 @@ class conjointGUI:
                     self.randomize_resp_attr.set(1)
                     self.weighted_randomize_attr = IntVar()
                     self.weighted_randomize_attr.set(0)
+                    self.no_duplicate_profiles = IntVar()
+                    self.no_duplicate_profiles.set(0)
                     self.task_num = StringVar()
                     self.task_num.set("5")
                     self.profile_num = StringVar()
@@ -406,6 +419,9 @@ class conjointGUI:
         
         self.weighted_randomize_button = Checkbutton(self.settings, text="Use weighted randomization", variable = self.weighted_randomize_attr)
         self.weighted_randomize_button.pack()
+        
+        self.no_duplicate_profiles_button = Checkbutton(self.settings, text="Prevent identical profiles", variable = self.no_duplicate_profiles)
+        self.no_duplicate_profiles_button.pack()
         
         self.weighted_randomize_rule = Frame(self.settings,height=1,width=200,bg="black")
         self.weighted_randomize_rule.pack(pady=10)
@@ -931,9 +947,16 @@ class conjointGUI:
         out_php_name = filedialog.asksaveasfilename(**self.file_php)
         if out_php_name != None:
             if re.search("\.php",out_php_name[-4:]) != None:
-                qualtrics_out(out_php_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()))
+                qualtrics_out(out_php_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()), int(self.no_duplicate_profiles.get()))
             else:
                 messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .php extension")
+
+   # Export the design information to .js
+    def export_qualtrics_js(self):
+        out_js_name = filedialog.asksaveasfilename(**self.file_js)
+        if out_js_name != None:
+            qualtrics_out_js(out_js_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()), int(self.no_duplicate_profiles.get()))
+            
 
     # Export the design information to R
     def export_R(self):
@@ -1133,6 +1156,8 @@ class conjointGUI:
         self.randomize_resp_attr.set(1)
         self.weighted_randomize_attr = IntVar()
         self.weighted_randomize_attr.set(0)
+        self.no_duplicate_profiles = IntVar()
+        self.no_duplicate_profiles.set(0)
         self.task_num = StringVar()
         self.task_num.set("5")
         self.profile_num = StringVar()
@@ -1186,7 +1211,7 @@ def R_out(filename, attributes, level_dict, restrictions, constraints, probabili
      out_file.close()
     
 # Output results to a qualtrics-compatible php file
-def qualtrics_out(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize):
+def qualtrics_out(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates):
     
     temp_1 = """<?php
 // Code to randomly generate conjoint profiles to send to a Qualtrics instance
@@ -1227,6 +1252,16 @@ function weighted_randomize($prob_array, $at_key)
 
 }
                     """
+                    
+    temp_2_star = """// Place the $featurearray keys into a new array
+$featureArrayKeys = array();
+$incr = 0;
+
+foreach($featurearray as $attribute => $levels){	
+	$featureArrayKeys[$incr] = $attribute;
+	$incr = $incr + 1;
+}"""
+                    
     temp_2 = """// Re-randomize the $featurearray
 
 // Place the $featurearray keys into a new array
@@ -1369,6 +1404,41 @@ for($p = 1; $p <= $K; $p++){
 					}
 				}
 			}
+            // Cycle through all previous profiles to confirm no identical profiles
+            if ($noDuplicateProfiles == True){
+    			if ($i > 1){
+    
+    				// For each previous profile
+    				for($z = 1; $z < $i; $z++){
+    					
+    					// Start by assuming it's the same
+    					$identical = True;
+    					
+    					// Create a count for $attributes to be incremented in the next loop
+    					$attrTemp = 0;
+    					
+    					// For each attribute $attribute and level array $levels in task $p
+    					foreach($featureArrayNew as $attribute => $levels){	
+    						
+    						// Increment attribute count
+    						$attrTemp = $attrTemp + 1;
+    
+    						// Create keys 
+    						$level_key_profile = "F-" . (string)$p . "-" . (string)$i . "-" . (string)$attrTemp;
+    						$level_key_check = "F-" . (string)$p . "-" . (string)$z . "-" . (string)$attrTemp;
+    						
+    						// If attributes are different, declare not identical
+    						if ($returnarray[$level_key_profile] != $returnarray[$level_key_check]){
+    							$identical = False;
+    						}
+    					}
+    					// If we detect an identical profile, reject
+    					if ($identical == True){
+    						$clear = False;
+    					}
+    				} 
+                }
+            }
 			$complete = $clear;
 		}
 	}
@@ -1482,6 +1552,13 @@ print  json_encode($returnarray);
     out_file.write("$N = " + str(profiles) + ";\n\n")
     out_file.write("// num_attributes = Number of Attributes in the Array\n")
     out_file.write("$num_attributes = count($featurearray);\n\n")
+    out_file.write("// Should duplicate profiles be rejected?\n")
+        
+    if noDuplicates == True:
+        out_file.write("$noDuplicateProfiles = True;\n\n")
+    else:
+        out_file.write("$noDuplicateProfiles = False;\n\n")
+    
 
     if randomize == 1:
         out_file.write("\n")
@@ -1509,7 +1586,397 @@ print  json_encode($returnarray);
         out_file.write(temp_2)
     else:
         out_file.write("\n")
+        out_file.write(temp_2_star)
+        out_file.write("\n")
         out_file.write("$featureArrayNew = $featurearray;\n\n")
+    
+    out_file.write(temp_3)
+    
+    out_file.close()
+    
+# Output results to a qualtrics-compatible javascript file
+def qualtrics_out_js(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates):
+    
+    temp_1 = """// Code to randomly generate conjoint profiles in a Qualtrics survey
+
+// Terminology clarification: 
+// Task = Set of choices presented to respondent in a single screen (i.e. pair of candidates)
+// Profile = Single list of attributes in a given task (i.e. candidate)
+// Attribute = Category characterized by a set of levels (i.e. education level)
+// Level = Value that an attribute can take in a particular choice task (i.e. "no formal education")
+
+// Attributes and Levels stored in a 2-dimensional Array 
+
+/* Randomize array in-place using Durstenfeld shuffle algorithm */
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return(array);
+}
+
+// Function to generate weighted random numbers
+function weighted_randomize(prob_array, at_key)
+{
+	var prob_list = prob_array[at_key];
+	
+	// Create an array containing cutpoints for randomization
+	var cumul_prob = new Array(prob_list.length);
+	var cumulative = 0.0;
+	for (var i=0;  i < prob_list.length; i++){
+		cumul_prob[i] = cumulative;
+		cumulative = cumulative + parseFloat(prob_list[i]);
+	}
+
+	// Generate a uniform random floating point value between 0.0 and 1.0
+	var unif_rand = Math.random();
+
+	// Figure out which integer should be returned
+	var outInt = 0;
+	for (var k = 0; k < cumul_prob.length; k++){
+		if (cumul_prob[k] <= unif_rand){
+			outInt = k + 1;
+		}
+	}
+
+	return(outInt);
+
+}
+                    """
+                    
+    temp_2_star = """// Place the $featurearray keys into a new array
+var featureArrayKeys = Object.keys(featurearray);"""
+
+    temp_2 = """// Re-randomize the featurearray
+
+// Place the $featurearray keys into a new array
+var featureArrayKeys = Object.keys(featurearray);
+
+// If order randomization constraints exist, drop all of the non-free attributes
+if (attrconstraintarray.length != 0){
+	for (const constraints of attrconstraintarray){
+		if (constraints.length > 1){
+			for (var p = 1; p < constraints.length; p++){
+				if (featureArrayKeys.includes(constraints[p])){
+					var remkey = featureArrayKeys.indexOf(constraints[p]);
+                    featureArrayKeys.splice(remkey, 1);
+				}
+			}
+		}
+	}
+} 
+
+// Re-randomize the featurearray keys
+featureArrayKeys = shuffleArray(featureArrayKeys);
+
+// Re-insert the non-free attributes constrained by $attrconstraintarray
+if (attrconstraintarray.length != 0){
+	for (const constraints of attrconstraintarray){
+		if (constraints.length > 1){
+			var insertloc = constraints[0];
+			if (featureArrayKeys.includes(insertloc)){
+				var insert_block = [];
+				for (var p = 1; p < constraints.length; p++){
+          insert_block.push(constraints[p]);
+				}
+				var begin_index = featureArrayKeys.indexOf(insertloc);
+				featureArrayKeys.splice(begin_index+1, 0, ...insert_block);
+			}
+		}
+	}
+}
+
+
+// Re-generate the new $featurearray - label it $featureArrayNew
+var featureArrayNew = {};
+for (var h = 0; h < featureArrayKeys.length; h++){
+    featureArrayNew[featureArrayKeys[h]] = featurearray[featureArrayKeys[h]];        
+}
+
+"""
+
+    temp_3 = """
+// Initialize the array returned to the user
+// Naming Convention
+// Level Name: F-[task number]-[profile number]-[attribute number]
+// Attribute Name: F-[task number]-[attribute number]
+// Example: F-1-3-2, Returns the level corresponding to Task 1, Profile 3, Attribute 2 
+// F-3-3, Returns the attribute name corresponding to Task 3, Attribute 3
+
+var returnarray = {};
+
+// For each task $p
+for(var p = 1; p <= K; p++){
+
+	// For each profile $i
+	for(var i = 1; i <= N; i++){
+
+		// Repeat until non-restricted profile generated
+		var complete = false;
+
+		while (complete == false){
+
+			// Create a count for $attributes to be incremented in the next loop
+			var attr = 0;
+			
+			// Create a dictionary to hold profile's attributes
+			var profile_dict = {};
+
+			// For each attribute $attribute and level array $levels in task $p
+			for(var q = 0; q < featureArrayKeys.length; q++){
+				// Get Attribute name
+				var attr_name = featureArrayKeys[q];
+					
+				// Increment attribute count
+				attr = attr + 1;
+	
+				// Create key for attribute name
+				var attr_key = "F-" + p + "-" + attr;
+	
+				// Store attribute name in Qualtrics
+				Qualtrics.SurveyEngine.setEmbeddedData(attr_key, attr_name);
+	
+				// Get length of levels array
+				var num_levels = featureArrayNew[attr_name].length;
+
+				// Randomly select one of the level indices
+				if (weighted == 1){
+					var level_index = weighted_randomize(probabilityarray, attr_name) - 1;
+
+				}else{
+					var level_index = Math.floor(Math.random() * num_levels);
+				}	
+
+				// Pull out the selected level
+				var chosen_level = featureArrayNew[attr_name][level_index];
+				
+				// Store selected level in profileDict
+				profile_dict[attr_name] = chosen_level;
+	
+				// Create key for level in $returnarray
+				var level_key = "F-" + p + "-" + i + "-" + attr;
+	
+				// Store selected level in $returnarray
+				returnarray[level_key] = chosen_level;
+
+			}
+
+            var clear = true;
+            
+            // Cycle through restrictions to confirm/reject profile
+            if (restrictionarray.length != 0){
+                for (var v = 0; v < restrictionarray.length; v++){
+                    var falsevar = 1;
+                    for (var mp = 0; mp < restrictionarray[v].length; mp++){
+                        if (profile_dict[restrictionarray[v][mp][0]] == restrictionarray[v][mp][1]){
+                            falsevar = falsevar*1;
+                        }else{
+                            falsevar = falsevar*0;
+                        }							
+                    }
+                    if (falsevar == 1){
+                        clear = false;
+                    }
+                }
+            }
+                            
+            // If we're throwing out duplicates
+            if (noDuplicateProfiles == true){
+                // Cycle through all previous profiles to confirm no identical profiles
+                if (i > 1){    
+                    // For each previous profile
+                    for(var z = 1; z < i; z++){
+    					
+                        // Start by assuming it's the same
+                        var identical = true;
+    					
+                        // Create a count for $attributes to be incremented in the next loop
+                        var attrTemp = 0;
+    					
+                        // For each attribute $attribute and level array $levels in task $p
+                        for(var qz = 0; qz < featureArrayKeys.length; qz++){
+    						
+                            // Increment attribute count
+                            attrTemp = attrTemp + 1;
+    
+                            // Create keys 
+                            var level_key_profile = "F-" + p + "-" + i + "-" + attrTemp;
+                            var level_key_check = "F-" + p + "-" + z + "-" + attrTemp;
+    						
+                            // If attributes are different, declare not identical
+                            if (returnarray[level_key_profile] != returnarray[level_key_check]){
+                                identical = false;
+                            }
+                        }
+                        // If we detect an identical profile, reject
+                        if (identical == true){
+                            clear = false;
+                        }
+                    }                
+                }
+            }
+            complete = clear;
+        }
+    }
+}
+                            
+// Write returnarray to Qualtrics
+
+var returnarrayKeys = Object.keys(returnarray);
+
+for (var pr = 0; pr < returnarrayKeys.length; pr++){
+       Qualtrics.SurveyEngine.setEmbeddedData(returnarrayKeys[pr], returnarray[returnarrayKeys[pr]]); 
+}
+
+
+
+"""
+    # Drop attributes that don't have any levels
+    attrout = []
+    contin = True
+    for i in range(len(attributes)):
+        if len(level_dict[attributes[i]]) > 0:
+            attrout.append(attributes[i])
+        else:
+            contin = False
+            print("Error: Attribute " + attributes[i] + " has no associated levels")
+    if contin == False:
+        messagebox.showerror(title="Error",message="Error: Cannot export to JavaScript. Some attributes have no levels.")
+        return 
+    
+    # Drop any Null constraints
+    constrai = []
+    for c in constraints:
+        if c != []:
+            constrai.append(c)
+    
+    constraints = constrai
+    
+    out_file = open(filename,"w", encoding="utf-8")
+    out_file.write(temp_1)
+    out_file.write("\n\n")
+    arrayString = "var featurearray = {"
+    for i in range(len(attrout)):
+        attr = attrout[i]
+        
+        arrayString = arrayString + '"'+attr+'" : ['
+        
+        for k in range(len(level_dict[attr])):
+            level = level_dict[attr][k]
+            arrayString = arrayString + '"' + level + '"'
+            if k != len(level_dict[attr]) - 1:
+                arrayString = arrayString + ","
+                
+        if i != len(attributes) - 1:
+            arrayString = arrayString + "],"     
+        else:
+            arrayString = arrayString + "]"
+    
+    arrayString = arrayString + "};\n\n"
+    
+    out_file.write(arrayString)
+    if len(restrictions) > 0:
+        restrictionString = "var restrictionarray = ["
+        for m in range(len(restrictions)):
+            restrict = restrictions[m]
+            restrictionString = restrictionString + "["
+            for i in range(len(restrict)):
+                entry = restrict[i]
+                restrictionString = restrictionString + "["
+                restrictionString = restrictionString + '"' + entry[0] + '"'
+                restrictionString = restrictionString + ","
+                restrictionString = restrictionString + '"' + entry[1] + '"'
+                if i != len(restrict)-1:
+                    restrictionString = restrictionString + "],"
+                else:
+                    restrictionString = restrictionString + "]"
+            if m != len(restrictions)-1:
+                restrictionString = restrictionString + "],"
+            else:
+                restrictionString = restrictionString + "]"
+
+        restrictionString = restrictionString + "];\n\n"
+    else:
+        restrictionString = 'var restrictionarray = [];\n\n'
+    
+    out_file.write(restrictionString)    
+    
+    if random == 1:
+        probString = "var probabilityarray = {"
+        for i in range(len(attrout)):
+            attr = attrout[i]
+        
+            probString = probString + '"'+attr+'" : ['
+            for k in range(len(probabilities[attr])):
+                prob = probabilities[attr][k]
+                probString = probString + str(prob) 
+                if k != len(probabilities[attr]) - 1:
+                    probString = probString + ","
+            
+
+            if i != len(attributes) - 1:
+                probString = probString + "],"
+            else:
+                probString = probString + "]"
+                
+        probString = probString + "};\n\n"
+    else:
+        probString = "var probabilityarray = {};\n\n"
+        
+    out_file.write(probString)
+    
+        
+     
+    
+    out_file.write("// Indicator for whether weighted randomization should be enabled or not\n")
+    out_file.write("var weighted = " + str(random) + ";\n\n")
+    out_file.write("// K = Number of tasks displayed to the respondent\n")
+    out_file.write("var K = " + str(tasks) + ";\n\n")
+    out_file.write("// N = Number of profiles displayed in each task\n")
+    out_file.write("var N = " + str(profiles) + ";\n\n")
+    out_file.write("// num_attributes = Number of Attributes in the Array\n")
+    out_file.write("var num_attributes = featurearray.length;\n\n")
+    out_file.write("// Should duplicate profiles be rejected?\n")
+
+    if noDuplicates == True:
+        out_file.write("var noDuplicateProfiles = true;\n")
+    else:
+        out_file.write("var noDuplicateProfiles = false;\n")
+    
+
+
+    if randomize == 1:
+        out_file.write("\n")
+        
+        if len(constraints) > 0:
+            constString = "var attrconstraintarray = ["
+            for m in range(len(constraints)):
+                const = constraints[m]
+                constString = constString + "["
+                for i in range(len(const)):
+                    entry = const[i]
+                    constString = constString + '"' + entry + '"'
+                    if i != len(const)-1:
+                        constString = constString + ","
+                if m != len(constraints)-1:
+                    constString = constString + "],"
+                else:
+                    constString = constString + "]"
+            constString = constString + "];\n\n"
+        else:
+            constString = "var attrconstraintarray = array();\n"
+        
+        out_file.write(constString)        
+        out_file.write("\n")
+        out_file.write(temp_2)
+    else:
+        out_file.write("\n")
+        out_file.write(temp_2_star)
+        out_file.write("\n")
+        out_file.write("var featureArrayNew = featurearray;\n\n")
     
     out_file.write(temp_3)
     
