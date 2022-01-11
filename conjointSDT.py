@@ -1736,9 +1736,9 @@ for(var p = 1; p <= K; p++){
 				// Create key for attribute name
 				var attr_key = "F-" + p + "-" + attr;
 	
-				// Store attribute name in Qualtrics
-				Qualtrics.SurveyEngine.setEmbeddedData(attr_key, attr_name);
-	
+                // Store attribute name in returnarray
+                returnarray[attr_key] = attr_name;
+
 				// Get length of levels array
 				var num_levels = featureArrayNew[attr_name].length;
 
@@ -1967,7 +1967,7 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
                     constString = constString + "]"
             constString = constString + "];\n\n"
         else:
-            constString = "var attrconstraintarray = array();\n"
+            constString = "var attrconstraintarray = [];\n"
         
         out_file.write(constString)        
         out_file.write("\n")
