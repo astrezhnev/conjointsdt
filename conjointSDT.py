@@ -286,6 +286,9 @@ class conjointGUI:
                     self.update_listbox_attributes()
                     self.update_listbox_levels()
                     
+                    # If attribute_list and level_dict are out of sync
+                    self.synchronize_attribute_levels()
+                    
                 except:
                    messagebox.showerror(title="Error",message="Error: Could not open file")
             else:
@@ -297,6 +300,7 @@ class conjointGUI:
         if out_file_name != () and out_file_name != "":
             if re.search("\.sdt",out_file_name[-4:]) != None:
                 try:
+                    self.synchronize_attribute_levels()
                     save_file = open(out_file_name,"wb")
                     pick_out = pickle.Pickler(save_file)
                     pick_out.dump(self.attribute_list)
@@ -319,6 +323,7 @@ class conjointGUI:
             self.saveas_survey()
         else:
             try:
+                self.synchronize_attribute_levels()
                 save_file = open(self.file_name,"wb")
                 pick_out = pickle.Pickler(save_file)
                 pick_out.dump(self.attribute_list)
@@ -812,7 +817,7 @@ class conjointGUI:
     def reset_weights(self):
         
         self.tempProbabilities = {}
-        
+
         for k in self.level_dict:
             self.tempProbabilities[k] = []
             length = float(len(self.level_dict[k]))
@@ -858,9 +863,7 @@ class conjointGUI:
 
         item = map(int, self.prob_box_attributes.curselection())
         sums = self.compute_prob_sums()
-        #print(self.probabilities)
-        #print(self.level_dict)
-        #print(sums)
+
         if len(item) > 0:
             self.probactiveAttribute = self.attribute_list[item[0]]
             if self.probactiveAttribute != None:
@@ -929,6 +932,7 @@ class conjointGUI:
             if float(sums[k]) != 1:
                 all_sum_to_one = False
                 fails.append(k)
+
         return all_sum_to_one, fails
         
     # Sum the probabilities for each section
@@ -939,7 +943,6 @@ class conjointGUI:
             for k in self.tempProbabilities[attr]:
                 sum_out = sum_out + Fraction(k)
             sums[attr] = sum_out.limit_denominator()
-        
         return(sums)
         
     # Export the design information to .php
@@ -1105,12 +1108,16 @@ class conjointGUI:
             if len(self.attribute_list) > 0:
                 self.activeAttribute = self.attribute_list[0]
             else:
-                self.activeAttribute = None    
+                self.activeAttribute = None   
+            self.synchronize_attribute_levels()
             self.clear_probabilities()
             self.update_listbox_attributes()
             self.update_listbox_levels()
         
-
+    def synchronize_attribute_levels(self):
+        self.level_dict = {new_key: self.level_dict[new_key] for new_key in self.attribute_list}
+        self.probabilities = {new_key: self.probabilities[new_key] for new_key in self.attribute_list}
+    
     def remove_level(self):
         attrit = self.activeAttribute
         level = map(int, self.box_levels.curselection())
