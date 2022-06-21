@@ -350,7 +350,7 @@ class conjointGUI:
             in_file_name = filedialog.askopenfilename(**self.csv_opt)
             if re.search("\.csv",in_file_name[-4:]) != None:
                 try:
-                    open_file = open(in_file_name,"rb")
+                    open_file = open(in_file_name,"rt")
                     csv_open = csv.reader(open_file)
                     self.attribute_list = []
                     self.level_dict = {}
