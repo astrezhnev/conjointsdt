@@ -21,12 +21,18 @@ A sample survey file, `immigrant_demo.sdt`, is included in the Demos folder.
 ## Instructions
 
 Please consult the `conjoint_sdt_manual.pdf` file located in the Manual folder for detailed instructions on how to use the GUI design tool.
+
+The quickest way to field a design in Qualtrics is `Edit > Export Qualtrics Survey (.qsf)`, then in Qualtrics go to `Tools > Import/Export > Import survey` on the Survey tab and select the exported file.
   
 ## Companion R package
 
 After implementing the experiment and collecting the result, researchers can use the `cjoint` R package for analysis and visualization of the results. This package can be installed directly from CRAN. The most current documentation can be found at `https://cran.r-project.org/web/packages/cjoint/index.html`.
   
 ## Version History
+
+Version 3.2 - October 21, 2026
+
+Added "Export Qualtrics Survey (.qsf)", which exports the design as a complete Qualtrics survey file that can be imported directly into Qualtrics. The survey contains the JavaScript randomizer, declares all of the embedded data fields in the Survey Flow, and includes one question per conjoint task, so the embedded data fields no longer need to be added by hand. The survey supports Qualtrics' New Survey Taking Experience, which requires fields set from JavaScript to carry a `__js_` prefix; the survey flow copies these into the usual `F-` fields used by the `cjoint` R package.
 
 Version 3.1 - October 21, 2026
 

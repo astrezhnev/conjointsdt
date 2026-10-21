@@ -1,4 +1,4 @@
-# Conjoint Survey Design Tool Version 3.1: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
+# Conjoint Survey Design Tool Version 3.2: A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms
 # Copyright (c) 2026 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto
 
 # This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,11 @@ import sys, os, re
 import csv
 import pickle
 import copy
+import io
+import json
+import random
+import string
+import datetime
 from fractions import Fraction
 # Import TK
 from tkinter import *
@@ -86,6 +91,13 @@ class conjointGUI:
         self.file_js['title'] = "Select a file..."
         self.file_js['parent'] = self.myParent       
  
+        self.file_qsf = {}
+        self.file_qsf['defaultextension'] = '.qsf'
+        self.file_qsf['initialfile'] = "untitled.qsf" 
+        self.file_qsf['filetypes'] = [('Qualtrics survey files','.qsf'),('All Files', '.*')]
+        self.file_qsf['title'] = "Select a file..."
+        self.file_qsf['parent'] = self.myParent
+
         self.file_html = {}
         self.file_html['defaultextension'] = '.html'
         self.file_html['initialfile'] = "untitled.html" 
@@ -133,6 +145,7 @@ class conjointGUI:
         self.editmenu.add_command(label="Randomization Weights", command=self.probability_menu)
         self.editmenu.add_command(label="Attribute Order Constraints", command=self.edit_orderconstraints)
         self.editmenu.add_separator()
+        self.editmenu.add_command(label="Export Qualtrics Survey (.qsf)", command=self.export_qsf)
         self.editmenu.add_command(label="Export to JavaScript", command=self.export_qualtrics_js)
         self.editmenu.add_command(label="Create Qualtrics Question Templates", command=self.export_question)
         self.editmenu.add_command(label="Export design to R", command=self.export_R)        
@@ -944,6 +957,15 @@ class conjointGUI:
             qualtrics_out_js(out_js_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()), int(self.no_duplicate_profiles.get()))
             
 
+    # Export the design as a Qualtrics survey file (.qsf)
+    def export_qsf(self):
+        out_qsf_name = filedialog.asksaveasfilename(**self.file_qsf)
+        if out_qsf_name:
+            survey_name = os.path.splitext(os.path.basename(self.file_name))[0]
+            if survey_name == "Untitled":
+                survey_name = "Conjoint Survey"
+            qsf_out(out_qsf_name, survey_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()), int(self.no_duplicate_profiles.get()))
+
     # Export the design information to R
     def export_R(self):
         out_R_name = filedialog.asksaveasfilename(**self.file_dat)
@@ -1200,8 +1222,9 @@ def R_out(filename, attributes, level_dict, restrictions, constraints, probabili
          out_file.write(restrict_string + "\n")    
      out_file.close()
     
-# Output results to a qualtrics-compatible javascript file
-def qualtrics_out_js(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates):
+# Generate the javascript randomizer for Qualtrics. If js_prefix is True, fields are written with
+# the __js_ prefix used by Qualtrics' New Survey Taking Experience (see qsf_out)
+def qualtrics_js(attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates, js_prefix=False):
     
     temp_1 = """// Code to randomly generate conjoint profiles in a Qualtrics survey
 
@@ -1429,7 +1452,8 @@ for(var p = 1; p <= K; p++){
     }
 }
                             
-// Write returnarray to Qualtrics
+"""
+    temp_4 = """// Write returnarray to Qualtrics
 
 var returnarrayKeys = Object.keys(returnarray);
 
@@ -1439,6 +1463,21 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
 
 
 
+"""
+    temp_4_prefix = """// Write returnarray to Qualtrics
+// Each field is saved as __js_[field name]. setJSEmbeddedData adds the __js_ prefix itself and is
+// required in the New Survey Taking Experience; setEmbeddedData covers the legacy layouts.
+
+var returnarrayKeys = Object.keys(returnarray);
+
+for (var pr = 0; pr < returnarrayKeys.length; pr++){
+       if (typeof Qualtrics.SurveyEngine.setJSEmbeddedData === "function"){
+              Qualtrics.SurveyEngine.setJSEmbeddedData(returnarrayKeys[pr], returnarray[returnarrayKeys[pr]]);
+       }
+       try {
+              Qualtrics.SurveyEngine.setEmbeddedData("__js_" + returnarrayKeys[pr], returnarray[returnarrayKeys[pr]]);
+       } catch (e) {}
+}
 """
     # Drop attributes that don't have any levels
     attrout = []
@@ -1450,8 +1489,8 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
             contin = False
             print("Error: Attribute " + attributes[i] + " has no associated levels")
     if contin == False:
-        messagebox.showerror(title="Error",message="Error: Cannot export to JavaScript. Some attributes have no levels.")
-        return 
+        messagebox.showerror(title="Error",message="Error: Cannot export. Some attributes have no levels.")
+        return None
     
     # Drop any Null constraints
     constrai = []
@@ -1461,9 +1500,9 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     
     constraints = constrai
     
-    out_file = open(filename,"w", encoding="utf-8")
-    out_file.write(temp_1)
-    out_file.write("\n\n")
+    out = io.StringIO()
+    out.write(temp_1)
+    out.write("\n\n")
     arrayString = "var featurearray = {"
     for i in range(len(attrout)):
         attr = attrout[i]
@@ -1483,7 +1522,7 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     
     arrayString = arrayString + "};\n\n"
     
-    out_file.write(arrayString)
+    out.write(arrayString)
     if len(restrictions) > 0:
         restrictionString = "var restrictionarray = ["
         for m in range(len(restrictions)):
@@ -1508,7 +1547,7 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     else:
         restrictionString = 'var restrictionarray = [];\n\n'
     
-    out_file.write(restrictionString)    
+    out.write(restrictionString)    
     
     if random == 1:
         probString = "var probabilityarray = {"
@@ -1532,30 +1571,30 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
     else:
         probString = "var probabilityarray = {};\n\n"
         
-    out_file.write(probString)
+    out.write(probString)
     
         
      
     
-    out_file.write("// Indicator for whether weighted randomization should be enabled or not\n")
-    out_file.write("var weighted = " + str(random) + ";\n\n")
-    out_file.write("// K = Number of tasks displayed to the respondent\n")
-    out_file.write("var K = " + str(tasks) + ";\n\n")
-    out_file.write("// N = Number of profiles displayed in each task\n")
-    out_file.write("var N = " + str(profiles) + ";\n\n")
-    out_file.write("// num_attributes = Number of Attributes in the Array\n")
-    out_file.write("var num_attributes = featurearray.length;\n\n")
-    out_file.write("// Should duplicate profiles be rejected?\n")
+    out.write("// Indicator for whether weighted randomization should be enabled or not\n")
+    out.write("var weighted = " + str(random) + ";\n\n")
+    out.write("// K = Number of tasks displayed to the respondent\n")
+    out.write("var K = " + str(tasks) + ";\n\n")
+    out.write("// N = Number of profiles displayed in each task\n")
+    out.write("var N = " + str(profiles) + ";\n\n")
+    out.write("// num_attributes = Number of Attributes in the Array\n")
+    out.write("var num_attributes = featurearray.length;\n\n")
+    out.write("// Should duplicate profiles be rejected?\n")
 
     if noDuplicates == True:
-        out_file.write("var noDuplicateProfiles = true;\n")
+        out.write("var noDuplicateProfiles = true;\n")
     else:
-        out_file.write("var noDuplicateProfiles = false;\n")
+        out.write("var noDuplicateProfiles = false;\n")
     
 
 
     if randomize == 1:
-        out_file.write("\n")
+        out.write("\n")
         
         if len(constraints) > 0:
             constString = "var attrconstraintarray = ["
@@ -1575,18 +1614,62 @@ for (var pr = 0; pr < returnarrayKeys.length; pr++){
         else:
             constString = "var attrconstraintarray = [];\n"
         
-        out_file.write(constString)        
-        out_file.write("\n")
-        out_file.write(temp_2)
+        out.write(constString)        
+        out.write("\n")
+        out.write(temp_2)
     else:
-        out_file.write("\n")
-        out_file.write(temp_2_star)
-        out_file.write("\n")
-        out_file.write("var featureArrayNew = featurearray;\n\n")
+        out.write("\n")
+        out.write(temp_2_star)
+        out.write("\n")
+        out.write("var featureArrayNew = featurearray;\n\n")
     
-    out_file.write(temp_3)
-    
+    out.write(temp_3)
+    if js_prefix:
+        out.write(temp_4_prefix)
+    else:
+        out.write(temp_4)
+
+    return out.getvalue()
+
+# Output results to a qualtrics-compatible javascript file
+def qualtrics_out_js(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates):
+    js_code = qualtrics_js(attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates)
+    if js_code is None:
+        return
+    out_file = open(filename,"w", encoding="utf-8")
+    out_file.write(js_code)
     out_file.close()
+
+# HTML question text for task i (0-indexed), with piped embedded data fields
+def task_html(i, num_attr, profiles):
+    # Top Row
+    top = '<span>Question '+ str(i+1) + '</span>\n<br /><br />\n<span>Please carefully review the options detailed below, then please answer the questions.</span>\n<br/>\n<br/>\n<span>Which of these choices do you prefer?</span>\n<br />\n<div>\n<br />\n<table class="UserTable">\n<tbody>\n'    
+    
+    # Create a header row
+    header = "<tr>\n<td>&nbsp;</td>\n"
+    for k in range(profiles):
+        header = header + '<td style="text-align: center;">\n<strong>Choice ' + str(k+1) + '</strong></td>\n'
+    header = header + '</tr>\n'
+    
+    # Row Array
+    rows = ["A"]*num_attr
+    for m in range(num_attr):
+        rows[m] = "<tr>\n<td style='text-align: center;'><strong>${e://Field/F-" + str(i+1) + "-" + str(m+1) + "}</strong></td>\n"
+        for n in range(profiles):
+            rows[m] = rows[m] + "<td style='text-align: center;'>${e://Field/F-"+str(i+1) +"-" + str(n+1)+"-"+str(m+1)+"}</td>\n"
+        rows[m] = rows[m] + "</tr>"
+        
+    # Ending
+
+    
+    footer = "</tbody>\n</table>\n</div>"
+    
+    text_out = top + header
+    for j in rows:
+        text_out = text_out + j
+        
+    text_out = text_out + footer
+    return text_out
 
 # Output sample HTML template 
 def html_out(filename, num_attr, profiles, tasks):
@@ -1594,39 +1677,184 @@ def html_out(filename, num_attr, profiles, tasks):
     filename = filename.rstrip(".")
     
     for i in range(tasks):
-        # Top Row
-        top = '<span>Question '+ str(i+1) + '</span>\n<br /><br />\n<span>Please carefully review the options detailed below, then please answer the questions.</span>\n<br/>\n<br/>\n<span>Which of these choices do you prefer?</span>\n<br />\n<div>\n<br />\n<table class="UserTable">\n<tbody>\n'    
-        
-        # Create a header row
-        header = "<tr>\n<td>&nbsp;</td>\n"
-        for k in range(profiles):
-            header = header + '<td style="text-align: center;">\n<strong>Choice ' + str(k+1) + '</strong></td>\n'
-        header = header + '</tr>\n'
-        
-        # Row Array
-        rows = ["A"]*num_attr
-        for m in range(num_attr):
-            rows[m] = "<tr>\n<td style='text-align: center;'><strong>${e://Field/F-" + str(i+1) + "-" + str(m+1) + "}</strong></td>\n"
-            for n in range(profiles):
-                rows[m] = rows[m] + "<td style='text-align: center;'>${e://Field/F-"+str(i+1) +"-" + str(n+1)+"-"+str(m+1)+"}</td>\n"
-            rows[m] = rows[m] + "</tr>"
-            
-        # Ending
-
-        
-        footer = "</tbody>\n</table>\n</div>"
-        
-        text_out = top + header
-        for j in rows:
-            text_out = text_out + j
-            
-        text_out = text_out + footer
+        text_out = task_html(i, num_attr, profiles)
         
         out_file = open(filename + "_task"+str(i+1) + ".html", "w", encoding="utf-8")
         out_file.write(text_out)
         out_file.close()
     messagebox.showinfo(title="Files Created", message=str(tasks) + " files created\n\n" + filename + "_task#.html")
-    
+
+# Random Qualtrics-style identifier (e.g. BL_3Ff6UG8Jeti9nhj). Qualtrics assigns new IDs on import
+def qualtrics_id(prefix):
+    return prefix + "_" + "".join(random.choice(string.ascii_letters + string.digits) for _ in range(15))
+
+# Plain-text summary of question text, used by Qualtrics in the survey editor
+def qualtrics_description(text):
+    plain = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text)).strip()
+    if len(plain) > 99:
+        plain = plain[:99] + "..."
+    return plain
+
+def qsf_question(survey_id, qid, export_tag, question_type, selector, sub_selector, text, choices, js=None):
+    payload = {
+        "QuestionText": text,
+        "DefaultChoices": False,
+        "DataExportTag": export_tag,
+        "QuestionType": question_type,
+        "Selector": selector,
+        "Configuration": {"QuestionDescriptionOption": "UseText"},
+        "QuestionDescription": qualtrics_description(text),
+        "Choices": {str(k + 1): {"Display": c} for k, c in enumerate(choices)},
+        "ChoiceOrder": [str(k + 1) for k in range(len(choices))],
+        "Validation": {"Settings": {"ForceResponse": "OFF", "ForceResponseType": "OFF", "Type": "None"}},
+        "GradingData": [],
+        "Language": [],
+        "NextChoiceId": len(choices) + 1,
+        "NextAnswerId": 1,
+        "QuestionID": qid,
+        "DataVisibility": {"Private": False, "Hidden": False}
+    }
+    if len(choices) == 0:
+        del payload["Choices"]
+        payload["Validation"] = {"Settings": {"Type": "None"}}
+    if sub_selector != None:
+        payload["SubSelector"] = sub_selector
+    if js != None:
+        payload["QuestionJS"] = js
+    return {"SurveyID": survey_id, "Element": "SQ", "PrimaryAttribute": qid, "SecondaryAttribute": qualtrics_description(text), "TertiaryAttribute": None, "Payload": payload}
+
+def qsf_embedded_field(field, value=None):
+    entry = {"Description": field, "Type": "Recipient", "Field": field, "VariableType": "String", "DataVisibility": [], "AnalyzeText": False}
+    if value != None:
+        entry["Type"] = "Custom"
+        entry["Value"] = value
+    return entry
+
+# Output a Qualtrics survey file (.qsf) containing the randomizer, the embedded data fields and one question per task
+def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constraints, probabilities, weighted, profiles, tasks, randomize, noDuplicates):
+    js_code = qualtrics_js(attributes, level_dict, restrictions, constraints, probabilities, weighted, profiles, tasks, randomize, noDuplicates, js_prefix=True)
+    if js_code is None:
+        return
+    num_attr = len(attributes)
+
+    # Fields set by the randomizer, in the order they appear in the data
+    fields = []
+    for t in range(1, tasks + 1):
+        fields = fields + ["F-" + str(t) + "-" + str(a) for a in range(1, num_attr + 1)]
+        for p in range(1, profiles + 1):
+            fields = fields + ["F-" + str(t) + "-" + str(p) + "-" + str(a) for a in range(1, num_attr + 1)]
+
+    survey_id = qualtrics_id("SV")
+    response_set = qualtrics_id("RS")
+    intro_block = qualtrics_id("BL")
+    trash_block = qualtrics_id("BL")
+    task_block = qualtrics_id("BL")
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # The randomizer runs when the introduction page loads
+    intro_js = "Qualtrics.SurveyEngine.addOnload(function()\n{\n" + js_code + "\n});\n\nQualtrics.SurveyEngine.addOnReady(function()\n{\n\t/*Place your JavaScript here to run when the page is fully displayed*/\n\n});\n\nQualtrics.SurveyEngine.addOnUnload(function()\n{\n\t/*Place your JavaScript here to run when the page is unloaded*/\n\n});"
+    intro_text = "On the following pages, you will be shown " + str(tasks) + " sets of " + str(profiles) + " options. For each set, please select the option you prefer."
+    questions = [qsf_question(survey_id, "QID1", "conjoint_intro", "DB", "TB", None, intro_text, [], intro_js)]
+    task_elements = []
+    for t in range(tasks):
+        qid = "QID" + str(t + 2)
+        questions.append(qsf_question(survey_id, qid, "task" + str(t + 1), "MC", "SAVR", "TX", task_html(t, num_attr, profiles), ["Choice " + str(k + 1) for k in range(profiles)]))
+        if t > 0:
+            task_elements.append({"Type": "Page Break"})
+        task_elements.append({"Type": "Question", "QuestionID": qid})
+
+    block_options = {"BlockLocking": "false", "RandomizeQuestions": "false", "BlockVisibility": "Expanded"}
+    blocks = {
+        "0": {"Type": "Default", "Description": "Conjoint Introduction", "ID": intro_block, "BlockElements": [{"Type": "Question", "QuestionID": "QID1"}], "Options": block_options},
+        "1": {"Type": "Trash", "Description": "Trash / Unused Questions", "ID": trash_block, "BlockElements": []},
+        "2": {"Type": "Standard", "SubType": "", "Description": "Conjoint Tasks", "ID": task_block, "BlockElements": task_elements, "Options": block_options}
+    }
+
+    # Declare the __js_ fields before the randomizer runs, then copy them into the F- fields
+    flow = [
+        {"Type": "EmbeddedData", "FlowID": "FL_2", "EmbeddedData": [qsf_embedded_field("__js_" + f) for f in fields]},
+        {"Type": "Block", "ID": intro_block, "FlowID": "FL_3", "Autofill": []},
+        {"Type": "EmbeddedData", "FlowID": "FL_4", "EmbeddedData": [qsf_embedded_field(f, "${e://Field/__js_" + f + "}") for f in fields]},
+        {"Type": "Standard", "ID": task_block, "FlowID": "FL_5", "Autofill": []}
+    ]
+
+    survey_options = {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "BallotBoxStuffingPrevention": "false",
+        "NoIndex": "Yes",
+        "SecureResponseFiles": "true",
+        "SurveyExpiration": "None",
+        "SurveyTermination": "DefaultMessage",
+        "Header": "",
+        "Footer": "",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "ValidationMessage": None,
+        "PreviousButton": " ← ",
+        "NextButton": " → ",
+        "SurveyTitle": "Qualtrics Survey | Qualtrics Experience Management",
+        "SkinType": "templated",
+        "Skin": {"brandingId": None, "templateId": "*base", "overrides": None},
+        "NewScoring": 1,
+        "ShowExportTags": "false",
+        "CollectGeoLocation": "false",
+        "PasswordProtection": "No",
+        "AnonymizeResponse": "No",
+        "RefererCheck": "No",
+        "ConfirmStart": False,
+        "AutoConfirmStart": False,
+        "RelevantID": "false",
+        "ResponseSummary": "No",
+        "EOSMessage": None,
+        "EOSRedirectURL": "https://",
+        "EmailThankYou": "false",
+        "InactiveSurvey": "DefaultMessage",
+        "PartialDataCloseAfter": "LastActivity",
+        "AvailableLanguages": {"EN": []},
+        "SurveyName": survey_name
+    }
+
+    def element(name, primary, payload, secondary=None, tertiary=None):
+        return {"SurveyID": survey_id, "Element": name, "PrimaryAttribute": primary, "SecondaryAttribute": secondary, "TertiaryAttribute": tertiary, "Payload": payload}
+
+    qsf = {
+        "SurveyEntry": {
+            "SurveyID": survey_id,
+            "SurveyName": survey_name,
+            "SurveyDescription": None,
+            "SurveyOwnerID": None,
+            "SurveyBrandID": None,
+            "DivisionID": None,
+            "SurveyLanguage": "EN",
+            "SurveyActiveResponseSet": response_set,
+            "SurveyStatus": "Inactive",
+            "SurveyStartDate": "0000-00-00 00:00:00",
+            "SurveyExpirationDate": "0000-00-00 00:00:00",
+            "SurveyCreationDate": now,
+            "CreatorID": None,
+            "LastModified": now,
+            "LastAccessed": "0000-00-00 00:00:00",
+            "LastActivated": "0000-00-00 00:00:00",
+            "Deleted": None
+        },
+        "SurveyElements": [
+            element("BL", "Survey Blocks", blocks),
+            element("FL", "Survey Flow", {"Type": "Root", "FlowID": "FL_1", "Flow": flow, "Properties": {"Count": 5}}),
+            element("PROJ", "CORE", {"ProjectCategory": "CORE", "SchemaVersion": "1.1.0"}, tertiary="1.1.0"),
+            element("QC", "Survey Question Count", None, secondary=str(len(questions))),
+            element("RS", response_set, None),
+            element("SCO", "Scoring", {"ScoringCategories": [], "ScoringCategoryGroups": [], "ScoringSummaryCategory": None, "ScoringSummaryAfterQuestions": 0, "ScoringSummaryAfterSurvey": 0, "DefaultScoringCategory": None, "AutoScoringCategory": None}),
+            element("SO", "Survey Options", survey_options),
+            element("STAT", "Survey Statistics", {"MobileCompatible": True, "ID": "Survey Statistics"})
+        ] + questions
+    }
+
+    out_file = open(filename, "w", encoding="utf-8")
+    json.dump(qsf, out_file, ensure_ascii=False)
+    out_file.close()
+
 # Main Loop
 if __name__=="__main__":
     

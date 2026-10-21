@@ -120,7 +120,7 @@
 
 \if0\blind
 \title{\bf \tit}
-  \author{Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, Teppei Yamamoto\\\\Version 3.1}
+  \author{Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, Teppei Yamamoto\\\\Version 3.2}
 
 \date{October 21, 2026}
 \maketitle
@@ -194,7 +194,8 @@ The \texttt{Edit} menu contains the following commands
 \item \texttt{Restrictions}: Opens the profile restrictions menu. Here you can set the attribute/level pairs that should be prevented from appearing in profiles (see Section 4.3 for details).
 \item \texttt{Randomization Weights}: Opens the randomization weights menu. Here you can set the probability that each level will be chosen in a randomly generated profile (see Section 4.4 for details).
 \item \texttt{Attribute Order Constraints}: Opens the attribute order constraint menu. One option in the Settings menu is to randomize the order of the attributes in the profiles for each respondent. This helps minimize the influence of possible ordering effects. In this panel, you may set constraints on this randomization such that particular sets of attributes are always grouped together in the same block.
-\item \texttt{Export to JavaScript}: Exports the current design to a .js file that carries out task and profile generation for each respondent. This file can be integrated directly into Qualtrics. See Section 5 for details.
+\item \texttt{Export Qualtrics Survey (.qsf)}: Exports the current design as a complete Qualtrics survey file, including the randomization script, the embedded data fields and one question per task. This is the easiest way to get a design into Qualtrics. See Section \ref{sec:qsf} for details.
+\item \texttt{Export to JavaScript}: Exports the current design to a .js file that carries out task and profile generation for each respondent. This file can be integrated directly into Qualtrics. See Section \ref{sec:js} for details.
 \item \texttt{Create Qualtrics Question Templates}: Generates HTML question templates for Qualtrics that have the correct embedded data identifiers for each attribute and level.
 \item \texttt{Export design to R}: Exports the design (level probabilities and randomization constraints) to be used by the R package \texttt{cjoint}. 
 \end{itemize}
@@ -275,7 +276,28 @@ Note that if you define multiple blocks, only the attributes \textit{within} eac
 
 \textbf{Note}: As with the profile restrictions, if you choose to delete an attribute you will have to manually remove any corresponding order randomization constraint 
 
-\section{Export to JavaScript}
+\section{Export Qualtrics Survey (.qsf)}\label{sec:qsf}
+
+The \texttt{Export Qualtrics Survey (.qsf)} command saves your design as a Qualtrics survey file that can be imported directly into Qualtrics. This creates a working conjoint survey without any manual setup. To import it, open a survey in Qualtrics, navigate to the Survey tab, click \texttt{Tools}, select \texttt{Import/Export}, choose \texttt{Import survey} and select the .qsf file. Select ``Research Core'' as the project category. Importing creates a new survey in your account.
+
+The imported survey contains the following:
+
+\begin{enumerate}
+\item An ``Embedded Data'' element at the top of the Survey Flow that declares every embedded data field used by the design.
+\item A ``Conjoint Introduction'' block with a single page of introductory text. The randomization script (the same code produced by \texttt{Export to JavaScript}) is attached to this question and generates the respondent's tasks when the page loads. You may edit the text, but do not remove the question.
+\item A second ``Embedded Data'' element that copies the randomized attributes and levels into the fields \texttt{F-[task number]-[attribute number]} and \texttt{F-[task number]-[profile number]-[attribute number]} described in Section \ref{sec:js}.
+\item A ``Conjoint Tasks'' block containing one Multiple Choice question per task, each on its own page. Each question displays the profiles in a table using the same layout as the \texttt{Create Qualtrics Question Templates} command, and has one choice per profile (``Choice 1'', ``Choice 2'', \ldots). The questions have the export tags \texttt{task1}, \texttt{task2}, \ldots
+\end{enumerate}
+
+You can then edit the question wording, add other blocks to the survey (for example, a consent form before the conjoint and demographic questions after it), and change the response format of the task questions. Keep the introduction block before the Conjoint Tasks block, and keep the second Embedded Data element between them.
+
+Qualtrics' New Survey Taking Experience (formerly the Simple layout), which is the default for new surveys, only saves embedded data set from JavaScript if the field name begins with \texttt{\_\_js\_}. The randomization script in the .qsf therefore saves each field with this prefix (e.g. \texttt{\_\_js\_F-1-1-1}), and the second Embedded Data element copies these into the unprefixed fields. Your results will contain both sets of columns. The \texttt{F-} columns are the ones read by the \texttt{cjoint} R package, and the \texttt{\_\_js\_} columns can be ignored.
+
+The survey is exported with the back button disabled. We recommend keeping it disabled, as returning to the introduction page would run the randomization script again and assign the respondent new profiles. As always, preview the survey and check a test response before fielding it.
+
+If you want to add the conjoint to an existing survey rather than build the survey around it, use \texttt{Export to JavaScript} (Section \ref{sec:js}) instead.
+
+\section{Export to JavaScript}\label{sec:js}
 
 To incorporate your conjoint design into Qualtrics, you can generate a snippet of javascript code that will randomly generate a full set of tasks for a respondent according to your specified settings. The snippet can be added to the custom javascript of any survey question that appears prior to your conjoint question block (typically the survey consent page if you have one).
 
