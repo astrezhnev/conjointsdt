@@ -122,7 +122,7 @@
 \title{\bf \tit}
   \author{Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, Teppei Yamamoto\\\\Version 3.2}
 
-\date{October 21, 2026}
+\date{November 5, 2026}
 \maketitle
 \if1\blind
 \maketitle
@@ -185,7 +185,7 @@ Above the panels are two action menus. The \texttt{File} menu contains the follo
 \item \texttt{Open}: Opens an existing project. Project filenames all must end in sdt. Note that files with these extensions will not automatically open when clicked on in a file browser.
 \item \texttt{Save}: Saves current project. Project filenames must end in .sdt.
 \item \texttt{Save As}: Saves current project to a new file.
-\item \texttt{Import from CSV}: Imports a set of pre-defined attributes and levels from a Comma Separated Values file. CSV files must contain one line per attribute. The first element of each line defines the name of the attribute. The subsequent elements are the names of the corresponding levels.
+\item \texttt{Import from CSV}: Imports a set of pre-defined attributes and levels from a Comma Separated Values file, replacing the current design. CSV files must contain one line per attribute. The first element of each line defines the name of the attribute. The subsequent elements are the names of the corresponding levels. Lines may contain different numbers of levels, and attribute or level names that contain a comma must be enclosed in double quotes (e.g. \texttt{"Level with a , in it"}). Files saved from Excel, Numbers or a text editor are all accepted: values may be separated by commas, semicolons or tabs, spaces around values and blank lines are ignored, and files may be encoded as UTF-8 or Windows-1252. Each attribute name may appear only once. If the file cannot be read, an error message describes the problem and the current design is left unchanged.
 \end{itemize}
 
 The \texttt{Edit} menu contains the following commands
@@ -278,7 +278,7 @@ Note that if you define multiple blocks, only the attributes \textit{within} eac
 
 \section{Export Qualtrics Survey (.qsf)}\label{sec:qsf}
 
-The \texttt{Export Qualtrics Survey (.qsf)} command saves your design as a Qualtrics survey file that can be imported directly into Qualtrics. This creates a working conjoint survey without any manual setup. To import it, open a survey in Qualtrics, navigate to the Survey tab, click \texttt{Tools}, select \texttt{Import/Export}, choose \texttt{Import survey} and select the .qsf file. Select ``Research Core'' as the project category. Importing creates a new survey in your account.
+The \texttt{Export Qualtrics Survey (.qsf)} command saves your design as a Qualtrics survey file that can be imported directly into Qualtrics. This creates a working conjoint survey without any manual setup. To import it, click \texttt{Create project} in Qualtrics, choose \texttt{Survey}, and when asked how you want to start, choose to import a QSF file and select the exported file. Importing creates a new survey in your account.
 
 The imported survey contains the following:
 
@@ -294,6 +294,8 @@ You can then edit the question wording, add other blocks to the survey (for exam
 Qualtrics' New Survey Taking Experience (formerly the Simple layout), which is the default for new surveys, only saves embedded data set from JavaScript if the field name begins with \texttt{\_\_js\_}. The randomization script in the .qsf therefore saves each field with this prefix (e.g. \texttt{\_\_js\_F-1-1-1}), and the second Embedded Data element copies these into the unprefixed fields. Your results will contain both sets of columns. The \texttt{F-} columns are the ones read by the \texttt{cjoint} R package, and the \texttt{\_\_js\_} columns can be ignored.
 
 The survey is exported with the back button disabled. We recommend keeping it disabled, as returning to the introduction page would run the randomization script again and assign the respondent new profiles. As always, preview the survey and check a test response before fielding it.
+
+All other survey settings, including the look and feel, are left at Qualtrics' defaults for a new survey and can be changed in Qualtrics after importing. The .qsf file does not contain any information about you or your Qualtrics account: Qualtrics requires the file to name an owner and a brand, so the tool writes the placeholders \texttt{UR\_QSFPLACEHOLDER} and \texttt{QSF\_PLACEHOLDER\_BRAND}, which Qualtrics replaces with your own account and brand when you import the survey. The survey is named after your .sdt file.
 
 If you want to add the conjoint to an existing survey rather than build the survey around it, use \texttt{Export to JavaScript} (Section \ref{sec:js}) instead.
 

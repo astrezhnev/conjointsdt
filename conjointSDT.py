@@ -51,9 +51,9 @@ default_options["listbox_width"] = 30
 default_options["listbox_height"] = 30
 
 # License Environmental Variables
-version = "3.0"
+version = "3.2"
 progname = "Conjoint Survey Design Tool Version " + version + ": A Python Graphical User Interface For Creating Conjoint Experimental Designs Usable With Web Survey Platforms"
-copyright = "Copyright (c) 2022 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
+copyright = "Copyright (c) 2026 Anton Strezhnev, Jens Hainmueller, Daniel J. Hopkins, and Teppei Yamamoto"
 GPL = "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>."
 companion = "This software program was designed as a companion to"
 citation = 'Hainmueller, Jens, Daniel J. Hopkins, and Teppei Yamamoto. "Causal inference in conjoint analysis: Understanding multidimensional choices via stated preference experiments." Political Analysis 22, no. 1 (2014): 1-30.'

@@ -22,7 +22,7 @@ A sample survey file, `immigrant_demo.sdt`, is included in the Demos folder.
 
 Please consult the `conjoint_sdt_manual.pdf` file located in the Manual folder for detailed instructions on how to use the GUI design tool.
 
-The quickest way to field a design in Qualtrics is `Edit > Export Qualtrics Survey (.qsf)`, then in Qualtrics go to `Tools > Import/Export > Import survey` on the Survey tab and select the exported file.
+The quickest way to field a design in Qualtrics is `Edit > Export Qualtrics Survey (.qsf)`, then in Qualtrics click `Create project`, choose `Survey`, and import the exported .qsf file.
   
 ## Companion R package
 
@@ -30,9 +30,11 @@ After implementing the experiment and collecting the result, researchers can use
   
 ## Version History
 
-Version 3.2 - October 21, 2026
+Version 3.2 - November 5, 2026
 
-Added "Export Qualtrics Survey (.qsf)", which exports the design as a complete Qualtrics survey file that can be imported directly into Qualtrics. The survey contains the JavaScript randomizer, declares all of the embedded data fields in the Survey Flow, and includes one question per conjoint task, so the embedded data fields no longer need to be added by hand. The survey supports Qualtrics' New Survey Taking Experience, which requires fields set from JavaScript to carry a `__js_` prefix; the survey flow copies these into the usual `F-` fields used by the `cjoint` R package.
+Added "Export Qualtrics Survey (.qsf)", which exports the design as a complete Qualtrics survey file that can be imported directly into Qualtrics. The survey contains the JavaScript randomizer, declares all of the embedded data fields in the Survey Flow, and includes one question per conjoint task, so the embedded data fields no longer need to be added by hand. The survey supports Qualtrics' New Survey Taking Experience, which requires fields set from JavaScript to carry a `__js_` prefix; the survey flow copies these into the usual `F-` fields used by the `cjoint` R package. The exported file contains no information about the user's Qualtrics account, and all other survey settings are left at Qualtrics' defaults.
+
+Fixed a bug where importing a design from a .csv file failed with "Could not open file" unless the tool had just been restarted. CSV import now also accepts files saved from Excel and Numbers (semicolon- or tab-separated, UTF-8 with or without a byte order mark, or Windows-1252), ignores spaces around values and blank lines, reports what is wrong with a file that cannot be read, and leaves the current design unchanged in that case.
 
 Version 3.1 - October 21, 2026
 
