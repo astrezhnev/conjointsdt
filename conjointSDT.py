@@ -353,49 +353,29 @@ class conjointGUI:
 
         if response != None:
             in_file_name = filedialog.askopenfilename(**self.csv_opt)
-            if re.search("\.csv",in_file_name[-4:]) != None:
-                try:
-                    open_file = open(in_file_name,"rt")
-                    csv_open = csv.reader(open_file)
-                    self.attribute_list = []
-                    self.level_dict = {}
-                    self.probabilities = {}
-                    self.options = default_options
-                    self.restrictions = []
-                    self.constraints = []
-                    self.update_listbox_attributes()
-                    self.update_listbox_levels()
-                    self.randomize_resp_attr = IntVar()
-                    self.randomize_resp_attr.set(1)
-                    self.weighted_randomize_attr = IntVar()
-                    self.weighted_randomize_attr.set(0)
-                    self.no_duplicate_profiles = IntVar()
-                    self.no_duplicate_profiles.set(0)
-                    self.task_num = StringVar()
-                    self.task_num.set("5")
-                    self.profile_num = StringVar()
-                    self.profile_num.set("2")
-                    
-                    for line in csv_open:
-                        attr = line.pop(0)
-                        self.attribute_list.append(attr)
-                        self.level_dict[attr] = []
-                        for entr in line:
-                            if entr != "":
-                                self.level_dict[attr].append(entr)
-                                
-                         
-                    open_file.close()
-                    self.clear_probabilities()
-                    self.file_name = "Untitled"
-                    self.update_file_name("Untitled")
-                    
-                    self.update_listbox_attributes()
-                    self.update_listbox_levels()
-                except:
-                    messagebox.showerror(title="Error",message="Error: Could not open file")
-            else:
+            # Dialog cancelled (returns "" or () depending on platform)
+            if not in_file_name:
+                return
+            if not in_file_name.lower().endswith(".csv"):
                 messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .csv extension")
+                return
+
+            # Parse the whole file before touching the current workspace, so a bad file leaves it intact
+            try:
+                attribute_list, level_dict = read_design_csv(in_file_name)
+            except (OSError, ValueError, csv.Error) as e:
+                messagebox.showerror(title="Error",message="Error: Could not import file\n\n" + str(e))
+                return
+
+            # Reset everything (including the active attribute, which previously kept pointing at an
+            # attribute from the old design and made every import after the first one fail)
+            self.clear_all_data()
+            self.attribute_list = attribute_list
+            self.level_dict = level_dict
+            self.clear_probabilities()
+            self.update_file_name("Untitled")
+            self.update_listbox_attributes()
+            self.update_listbox_levels()
                 
     # Quits the gui
     def exit_survey(self):
@@ -1162,17 +1142,14 @@ class conjointGUI:
         self.restrictions = []
         self.constraints = []
         self.probabilities = {}
+        self.activeAttribute = None
+        self.levels_label.config(text="Levels")
         self.update_listbox_attributes()
         self.update_listbox_levels()
-        self.randomize_resp_attr = IntVar()
         self.randomize_resp_attr.set(1)
-        self.weighted_randomize_attr = IntVar()
         self.weighted_randomize_attr.set(0)
-        self.no_duplicate_profiles = IntVar()
         self.no_duplicate_profiles.set(0)
-        self.task_num = StringVar()
         self.task_num.set("5")
-        self.profile_num = StringVar()
         self.profile_num.set("2")
         
     # -- Listbox --
@@ -1187,6 +1164,44 @@ class conjointGUI:
         self.update_levels("")
 
 # General Utility Functions
+
+# Read a design from a csv file: one row per attribute, first cell is the attribute name, remaining
+# cells are its levels. Rows may have different lengths. Accepts files saved by Excel/Numbers/LibreOffice
+# (UTF-8 with or without BOM, or Windows-1252; comma, semicolon or tab delimited).
+# Returns (attribute_list, level_dict); raises ValueError with a readable message on a malformed file.
+def read_design_csv(filename):
+    with open(filename, "rb") as f:
+        raw = f.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252", errors="replace")
+
+    # Excel in many European locales writes ';' instead of ','. Rows have different lengths, so csv.Sniffer
+    # is unreliable here; instead pick the delimiter that splits the most rows (ties go to ',').
+    def parse(delim):
+        return list(csv.reader(io.StringIO(text, newline=""), delimiter=delim))
+    candidates = [parse(d) for d in [",", ";", "\t"]]
+    rows = max(candidates, key=lambda rs: sum(1 for r in rs if len(r) > 1))
+
+    attribute_list = []
+    level_dict = {}
+    for row_num, row in enumerate(rows, start=1):
+        row = [cell.strip() for cell in row]
+        if not any(row):
+            continue  # blank line
+        attr = row[0]
+        if attr == "":
+            raise ValueError("Row " + str(row_num) + " has levels but no attribute name in the first column.")
+        if attr in level_dict:
+            raise ValueError('Attribute "' + attr + '" appears more than once (row ' + str(row_num) + ').')
+        attribute_list.append(attr)
+        level_dict[attr] = [lev for lev in row[1:] if lev != ""]
+
+    if len(attribute_list) == 0:
+        raise ValueError("The file does not contain any attributes.")
+    return attribute_list, level_dict
+
 # Output design to the R package
 def R_out(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize):
     
