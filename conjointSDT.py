@@ -1767,7 +1767,7 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # The randomizer runs when the introduction page loads
-    intro_js = "Qualtrics.SurveyEngine.addOnload(function()\n{\n" + js_code + "\n});\n\nQualtrics.SurveyEngine.addOnReady(function()\n{\n\t/*Place your JavaScript here to run when the page is fully displayed*/\n\n});\n\nQualtrics.SurveyEngine.addOnUnload(function()\n{\n\t/*Place your JavaScript here to run when the page is unloaded*/\n\n});"
+    intro_js = "Qualtrics.SurveyEngine.addOnload(function()\n{\n" + js_code + "\n});"
     intro_text = "On the following pages, you will be shown " + str(tasks) + " sets of " + str(profiles) + " options. For each set, please select the option you prefer."
     questions = [qsf_question(survey_id, "QID1", "conjoint_intro", "DB", "TB", None, intro_text, [], intro_js)]
     task_elements = []
@@ -1778,11 +1778,10 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
             task_elements.append({"Type": "Page Break"})
         task_elements.append({"Type": "Question", "QuestionID": qid})
 
-    block_options = {"BlockLocking": "false", "RandomizeQuestions": "false", "BlockVisibility": "Expanded"}
     blocks = {
-        "0": {"Type": "Default", "Description": "Conjoint Introduction", "ID": intro_block, "BlockElements": [{"Type": "Question", "QuestionID": "QID1"}], "Options": block_options},
+        "0": {"Type": "Default", "Description": "Conjoint Introduction", "ID": intro_block, "BlockElements": [{"Type": "Question", "QuestionID": "QID1"}]},
         "1": {"Type": "Trash", "Description": "Trash / Unused Questions", "ID": trash_block, "BlockElements": []},
-        "2": {"Type": "Standard", "SubType": "", "Description": "Conjoint Tasks", "ID": task_block, "BlockElements": task_elements, "Options": block_options}
+        "2": {"Type": "Standard", "SubType": "", "Description": "Conjoint Tasks", "ID": task_block, "BlockElements": task_elements}
     }
 
     # Declare the __js_ fields before the randomizer runs, then copy them into the F- fields
@@ -1793,42 +1792,13 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
         {"Type": "Standard", "ID": task_block, "FlowID": "FL_5", "Autofill": []}
     ]
 
+    # Only the options the importer requires; everything else is left to Qualtrics' defaults for a new survey
     survey_options = {
+        "SkinLibrary": "QSF_PLACEHOLDER_BRAND",
         "BackButton": "false",
-        "SaveAndContinue": "true",
         "SurveyProtection": "PublicSurvey",
-        "BallotBoxStuffingPrevention": "false",
-        "NoIndex": "Yes",
-        "SecureResponseFiles": "true",
         "SurveyExpiration": "None",
-        "SurveyTermination": "DefaultMessage",
-        "Header": "",
-        "Footer": "",
-        "ProgressBarDisplay": "None",
-        "PartialData": "+1 week",
-        "ValidationMessage": None,
-        "PreviousButton": " ← ",
-        "NextButton": " → ",
-        "SurveyTitle": "Qualtrics Survey | Qualtrics Experience Management",
-        "SkinType": "templated",
-        "Skin": {"brandingId": None, "templateId": "*base", "overrides": None},
-        "NewScoring": 1,
-        "ShowExportTags": "false",
-        "CollectGeoLocation": "false",
-        "PasswordProtection": "No",
-        "AnonymizeResponse": "No",
-        "RefererCheck": "No",
-        "ConfirmStart": False,
-        "AutoConfirmStart": False,
-        "RelevantID": "false",
-        "ResponseSummary": "No",
-        "EOSMessage": None,
-        "EOSRedirectURL": "https://",
-        "EmailThankYou": "false",
-        "InactiveSurvey": "DefaultMessage",
-        "PartialDataCloseAfter": "LastActivity",
-        "AvailableLanguages": {"EN": []},
-        "SurveyName": survey_name
+        "SurveyTermination": "DefaultMessage"
     }
 
     def element(name, primary, payload, secondary=None, tertiary=None):
@@ -1839,8 +1809,10 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
             "SurveyID": survey_id,
             "SurveyName": survey_name,
             "SurveyDescription": None,
-            "SurveyOwnerID": None,
-            "SurveyBrandID": None,
+            # Placeholders: Qualtrics requires an owner/creator ID matching ^URH?_[a-zA-Z0-9]{11,15}$, a non-empty
+            # brand ID and a SkinLibrary, and replaces them with the importing user's own account and brand.
+            "SurveyOwnerID": "UR_QSFPLACEHOLDER",
+            "SurveyBrandID": "QSF_PLACEHOLDER_BRAND",
             "DivisionID": None,
             "SurveyLanguage": "EN",
             "SurveyActiveResponseSet": response_set,
@@ -1848,7 +1820,7 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
             "SurveyStartDate": "0000-00-00 00:00:00",
             "SurveyExpirationDate": "0000-00-00 00:00:00",
             "SurveyCreationDate": now,
-            "CreatorID": None,
+            "CreatorID": "UR_QSFPLACEHOLDER",
             "LastModified": now,
             "LastAccessed": "0000-00-00 00:00:00",
             "LastActivated": "0000-00-00 00:00:00",
@@ -1859,7 +1831,7 @@ def qsf_out(filename, survey_name, attributes, level_dict, restrictions, constra
             element("FL", "Survey Flow", {"Type": "Root", "FlowID": "FL_1", "Flow": flow, "Properties": {"Count": 5}}),
             element("PROJ", "CORE", {"ProjectCategory": "CORE", "SchemaVersion": "1.1.0"}, tertiary="1.1.0"),
             element("QC", "Survey Question Count", None, secondary=str(len(questions))),
-            element("RS", response_set, None),
+            element("RS", response_set, None, secondary="Default Response Set"),
             element("SCO", "Scoring", {"ScoringCategories": [], "ScoringCategoryGroups": [], "ScoringSummaryCategory": None, "ScoringSummaryAfterQuestions": 0, "ScoringSummaryAfterSurvey": 0, "DefaultScoringCategory": None, "AutoScoringCategory": None}),
             element("SO", "Survey Options", survey_options),
             element("STAT", "Survey Statistics", {"MobileCompatible": True, "ID": "Survey Statistics"})
