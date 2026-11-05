@@ -135,6 +135,7 @@ class conjointGUI:
         self.editmenu.add_separator()
         self.editmenu.add_command(label="Export to JavaScript", command=self.export_qualtrics_js)
         self.editmenu.add_command(label="Create Qualtrics Question Templates", command=self.export_question)
+        self.editmenu.add_command(label="Create Qualtrics Embedder", command=self.export_embedder)
         self.editmenu.add_command(label="Export design to R", command=self.export_R)        
         
         self.aboutmenu = Menu(self.menu, tearoff=0)
@@ -942,7 +943,7 @@ class conjointGUI:
         out_js_name = filedialog.asksaveasfilename(**self.file_js)
         if out_js_name:
             qualtrics_out_js(out_js_name, self.attribute_list, self.level_dict, self.restrictions, self.constraints, self.probabilities, self.weighted_randomize_attr.get(), int(self.profile_num.get()), int(self.task_num.get()),int(self.randomize_resp_attr.get()), int(self.no_duplicate_profiles.get()))
-            
+           
 
     # Export the design information to R
     def export_R(self):
@@ -958,6 +959,14 @@ class conjointGUI:
                 html_out(out_html_name, len(self.attribute_list), int(self.profile_num.get()), int(self.task_num.get()))
             else:
                 messagebox.showerror(title="Invalid File Name",message="Invalid file extension. File must have the .html extension")
+
+
+    # Create code to set embedded variables in Qualtrics
+    def export_embedder(self):
+        out_js_name = filedialog.asksaveasfilename(**self.file_js)
+        if out_js_name:
+            embedder_out_js(out_js_name, len(self.attribute_list),  int(self.profile_num.get()), int(self.task_num.get()))
+
 
     # -- Message Box Prompt
     def msg_box(self, msg='Name of new attribute?', btname="Add", cmd = None, title = "",extra=True):
@@ -1200,6 +1209,80 @@ def R_out(filename, attributes, level_dict, restrictions, constraints, probabili
          out_file.write(restrict_string + "\n")    
      out_file.close()
     
+
+# Output js code to set all the embedded variables in the Qualtrics survey flow 
+def embedder_out_js(filename, attributes, profiles, tasks):
+    
+    upper_part = """// Code to embedd the Qualtrics survey flow with embedded variables for the conjoint
+
+/// setup 
+const EVENT_OPTIONS = {bubbles: true, cancelable: false, composed: true};
+const EVENTS = {
+    INPUT: new Event("input", EVENT_OPTIONS), 
+}; 
+                    """
+
+    out_file = open(filename,"w", encoding="utf-8")
+    out_file.write(upper_part)
+    out_file.write("\n\n")
+
+    out_file.write("let ct;\n")
+    out_file.write("ct = " + str(tasks) + "; /// NUMBER OF TASKS\n\n")
+    out_file.write("let pt;\n")
+    out_file.write("pt = " + str(profiles) + "; /// NUMBER OF PROFILES PER TASK\n\n")
+    out_file.write("let na;\n")
+    out_file.write("na = " + str(attributes) + "; /// NUMBER OF ATTRIBUTES\n\n")
+ 
+
+    lower_part = """
+    let f_max = ct * na; // gives the number of fields you need for the first row
+let d_max = ct * na * pt; // gives you number of attribute level fields you need to create
+
+// for the attribute order
+for (let f = 1; f <= f_max  ; f++) {
+    let i = Math.ceil(f / na);
+    let j = (f % na);
+    if (j === 0) {
+        j = na;
+    }
+    console.log("F-" + i + "-" + j );
+
+    document.getElementsByClassName("EDPart SetValueButton")[f].click();
+    const inputElement = document.querySelector(".inlineEditor");
+    inputElement.value = "F-" + i + "-" + j;
+    inputElement.dispatchEvent(EVENTS.INPUT);
+}
+
+
+// for the attribute values displayed
+for (let d = 1; d <= d_max; d++) {
+    let i = Math.ceil(d / (2*na));
+    let j = Math.ceil((d % (2*na)) / na);
+    let g = (d % na);
+    if (j === 0) {
+        j = pt;
+    }
+    if (g === 0) {
+        g = na;
+    }
+    console.log("F-" + i + "-" + j + "-" + g);
+
+    document.getElementsByClassName("EDPart SetValueButton")[f_max + d].click();
+    const inputElement = document.querySelector(".inlineEditor");
+    inputElement.value = "F-" + i + "-" + j + "-" + g;
+    inputElement.dispatchEvent(EVENTS.INPUT);
+}
+                    """
+
+
+
+    out_file.write("\n")
+    out_file.write(lower_part)
+    out_file.close()
+
+
+
+
 # Output results to a qualtrics-compatible javascript file
 def qualtrics_out_js(filename, attributes, level_dict, restrictions, constraints, probabilities, random, profiles, tasks, randomize, noDuplicates):
     

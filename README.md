@@ -28,6 +28,10 @@ After implementing the experiment and collecting the result, researchers can use
   
 ## Version History
 
+Version 3.2 - November XY, 2026
+
+Now you can also immediately create the javascript to embedd the survey flow with the associated embedded data fields needed to save what was displayed to respondents in each task. 
+
 Version 3.1 - October 21, 2026
 
 Removed the PHP randomizer. The JavaScript randomizer for Qualtrics is now the only export format, as it runs entirely within Qualtrics and does not require hosting a script on a separate server. Users who need a randomizer for a different survey platform can adapt the exported JavaScript.

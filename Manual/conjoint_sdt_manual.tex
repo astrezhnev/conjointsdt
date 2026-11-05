@@ -196,6 +196,7 @@ The \texttt{Edit} menu contains the following commands
 \item \texttt{Attribute Order Constraints}: Opens the attribute order constraint menu. One option in the Settings menu is to randomize the order of the attributes in the profiles for each respondent. This helps minimize the influence of possible ordering effects. In this panel, you may set constraints on this randomization such that particular sets of attributes are always grouped together in the same block.
 \item \texttt{Export to JavaScript}: Exports the current design to a .js file that carries out task and profile generation for each respondent. This file can be integrated directly into Qualtrics. See Section 5 for details.
 \item \texttt{Create Qualtrics Question Templates}: Generates HTML question templates for Qualtrics that have the correct embedded data identifiers for each attribute and level.
+\item \texttt{Create Qualtrics Embedder}: Generates JS code to embedd embedded data fields in the Qualtrics survey flow.
 \item \texttt{Export design to R}: Exports the design (level probabilities and randomization constraints) to be used by the R package \texttt{cjoint}. 
 \end{itemize}
 
@@ -283,6 +284,8 @@ The script will assign embedded data fields in Qualtrics for each randomized att
 
 \texttt{F-[task number]-[attribute number]} matches the attribute name corresponding to Task \texttt{[task number]}, Attribute \texttt{[attribute number]}. \texttt{F-[task number]-[profile number]-[attribute number]} matches the selected level corresponding to Task \texttt{[task number]}, Profile \texttt{[profile number]}, Attribute \texttt{[attribute number]}. For example, the embedded data field \texttt{F-1-3-2} will contain the level corresponding to Task 1, Profile 3, Attribute 2. Likewise, the embedded data field \texttt{F-3-3} will contain the attribute name corresponding to Task 3, Attribute 3.
 
+
+
 \subsection{How to embed your design into a Qualtrics question}
 
 If you are using the Qualtrics survey software, it is very easy to integrate the .js file you have exported with your survey flow. The following instructions will walk you through the process of incorporating your conjoint design into a Qualtrics question.
@@ -296,7 +299,7 @@ If you are using the Qualtrics survey software, it is very easy to integrate the
 \item You may then edit the question text, labels and responses to match your design. Note that references to the embedded data fields have the format \texttt{\$\{e://Field/F-[TASK]-[ATTRIBUTE]\}} (for attribute names) and \texttt{\$\{e://Field/F-[TASK]-[PROFILE]-[ATTRIBUTE]\}} (for attribute levels)
 \end{enumerate}
 
-In addition to pasting in the JavaScript code, you will also need to manually initialize each embedded data field in the Survey Flow in order for Qualtrics to correctly export these fields to the results CSV. To do this
+In addition to pasting in the JavaScript code, you will also need to initialize each embedded data field in the Survey Flow in order for Qualtrics to correctly export these fields to the results CSV. To do this manually
 
 \begin{enumerate}
 \item In your Qualtrics control panel, navigate to the Survey Flow.
@@ -304,9 +307,24 @@ In addition to pasting in the JavaScript code, you will also need to manually in
 \item Add a unique field for each attribute and each level embedded data field in your survey (e.g. F-1-1, F-2-1, F-1-3-2). The total number of fields will depend on the number of tasks, profiles and attributes. You can consult the generated HTML Question Templates (see above) for a list of all attribute and level identifiers used in your survey. You may leave the assigned value in this element to ``Value will be set from Panel or URL" as it will be subsequently modified by the JS code.
 \end{enumerate}
 
+Or use the \texttt{Create Qualtrics Embedder}. 
+
+Then, 
+
+
+\begin{enumerate}
+  \item Click in the \texttt{Edit} menu on \texttt{Create Qualtrics Embedder} and copy the generated JS code.
+  \item In your Qualtrics control panel, navigate to the Survey Flow.
+  \item Add a new ``Embedded Data" element to the top of your survey flow. Make sure that this element is above your conjoint question blocks \textbf{and above to the question that contains the JavaScript snippet} in the survey flow.
+  \item Paste the generated JS code into your browser's console and run. 
+  \end{enumerate}
+
+
 Note that if you skip this step and field the survey without initializing the fields in the Survey Flow, the questions do seem to correctly appear and the assigned attributes and levels for each respondent \textit{are} saved but will not be part of the CSV export. If you are having trouble getting the assigned attributes and levels to appear in your exported CSV results and you have already fielded your survey, make sure you add the embedded data field to your Survey Flow as above and re-export the CSV.
 
-If you can come up with a faster way of doing this, please let me know! Unfortunately, Qualtrics appears to need all exported embedded data fields to be defined in the Survey Flow.
+
+
+Unfortunately, Qualtrics appears to need all exported embedded data fields to be defined in the Survey Flow.
 
 \section{Export to R}
 
